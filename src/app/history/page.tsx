@@ -3,6 +3,6 @@
 import React from "react";
 import { SidebarDemo } from "@/components/sections/sidebarsection";
 
-export default function ProfilePage() {
-  return <SidebarDemo activeLink="Profile" />;
+export default function HistoryPage() {
+  return <SidebarDemo activeLink="History" />;
 }

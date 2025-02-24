@@ -2,7 +2,9 @@
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../ui/sidebar";
 import { ProfileContent } from "./ProfileContent";
-import { YourBidsContent } from "./YourBidsContent"; // Add this import
+import { YourBidsContent } from "./YourBidsContent";
+import { FindBidsContent } from "./FindBidsContent";
+import { HistorySection } from "./HistorySection";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -37,7 +39,7 @@ export function SidebarDemo({ activeLink = "Home" }: { activeLink?: string }) {
     },
     {
       label: "Find Bids",
-      href: "/find-bids",
+      href: "/findbid",
       icon: <IconMessages className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
     },
     {
@@ -88,6 +90,10 @@ export function SidebarDemo({ activeLink = "Home" }: { activeLink?: string }) {
               <ProfileContent />
             ) : activeLink === "Your Bids" ? (
               <YourBidsContent />
+            ) : activeLink === "Find Bids" ? (
+              <FindBidsContent />
+            ) : activeLink === "History" ? (
+              <HistorySection />
             ) : (
               <Dashboard />
             )}

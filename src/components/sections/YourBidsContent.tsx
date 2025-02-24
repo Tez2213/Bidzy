@@ -49,9 +49,9 @@ export function YourBidsContent() {
 
   const handleCreateBid = () => {
     try {
-      router.push("/your-bid/create-bid");
+      router.push("/createbid");
     } catch (error) {
-      window.location.href = "/your-bid/create-bid";
+      window.location.href = "/createbid";
     }
   };
 
@@ -68,13 +68,13 @@ export function YourBidsContent() {
               Manage your published and draft bids
             </p>
           </div>
-          <button
+            <button
             onClick={handleCreateBid}
             className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          >
+            >
             <IconPlus className="h-5 w-5" />
             Create New Bid
-          </button>
+            </button>
         </div>
 
         {/* Stats Section */}
