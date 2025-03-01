@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
-  const session = await getAuthSession();
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    // Fixed userId for demo without auth
+    const demoUserId = "123456789012345678901234"; // Use a valid ObjectId format for MongoDB
+
     const bids = await prisma.bid.findMany({
       where: {
-        userId: session.user.id,
+        userId: demoUserId,
       },
       orderBy: {
         createdAt: "desc",
@@ -30,12 +26,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getAuthSession();
-
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const body = await req.json();
     const { amount, itemId } = body;
@@ -47,10 +37,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fixed userId for demo without auth
+    const demoUserId = "123456789012345678901234"; // Use a valid ObjectId format
+
     const bid = await prisma.bid.create({
       data: {
         amount: parseFloat(amount),
-        userId: session.user.id,
+        userId: demoUserId,
         itemId,
       },
     });
