@@ -5,6 +5,7 @@ import { ProfileContent } from "./ProfileContent";
 import { YourBidsContent } from "./YourBidsContent";
 import { FindBidsContent } from "./FindBidsContent";
 import { HistorySection } from "./HistorySection";
+import PriceCalculator from "@/components/sections/PriceCalculator";
 import {
   IconArrowLeft,
   IconBrandTabler,
@@ -18,18 +19,13 @@ import {
   IconShield,
   IconUserCheck,
   IconBrain,
+  IconCalculator,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-export function SidebarDemo({
-  activeLink,
-  children,
-}: {
-  activeLink: string;
-  children?: React.ReactNode;
-}) {
+export function SidebarDemo({ activeLink }: { activeLink?: string }) {
   const [open, setOpen] = useState(false);
   const links = [
     {
@@ -56,6 +52,13 @@ export function SidebarDemo({
       label: "History",
       href: "/history",
       icon: <IconSettings className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+    },
+    {
+      label: "Price Calculator",
+      href: "/price-calculator",
+      icon: (
+        <IconCalculator className="text-neutral-300 h-5 w-5 flex-shrink-0" />
+      ),
     },
     {
       label: "Logout",
@@ -104,13 +107,14 @@ export function SidebarDemo({
               <FindBidsContent />
             ) : activeLink === "History" ? (
               <HistorySection />
+            ) : activeLink === "Price Calculator" ? (
+              <PriceCalculator />
             ) : (
               <Dashboard />
             )}
           </div>
         </main>
       </div>
-      <div className="flex-1 overflow-auto">{children}</div>
     </div>
   );
 }
