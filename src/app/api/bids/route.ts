@@ -2,31 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
-// GET /api/bids - Fetch all bids for the current user
+// This is a fallback API that returns empty data
 export async function GET() {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const bids = await prisma.bid.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    return NextResponse.json(bids);
-  } catch (error) {
-    console.error("Error fetching bids:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch bids" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json([]);
 }
 
 // POST /api/bids - Create a new bid

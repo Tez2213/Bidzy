@@ -50,22 +50,34 @@ export function YourBidsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch bids from API
+  // Fetch bids from API with proper error handling
   useEffect(() => {
     const fetchBids = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/bids");
+        // Use a try/catch to prevent issues if fetch fails
+        const response = await fetch("/api/bids").catch(() => null);
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch bids");
+        if (!response || !response.ok) {
+          // Handle case where fetch fails or returns error
+          console.log("Failed to fetch bids, using empty array");
+          setBids([]);
+          setError("Could not load bids. Please try again later.");
+          return;
         }
 
-        const data = await response.json();
-        setBids(data);
+        try {
+          const data = await response.json();
+          setBids(Array.isArray(data) ? data : []);
+        } catch (e) {
+          console.error("Error parsing JSON:", e);
+          setBids([]);
+          setError("Could not parse bid data.");
+        }
       } catch (err) {
-        setError("Failed to load bids. Please try again later.");
-        console.error(err);
+        console.error("Error in bid fetching:", err);
+        setBids([]);
+        setError("An unexpected error occurred.");
       } finally {
         setIsLoading(false);
       }
@@ -96,18 +108,20 @@ export function YourBidsContent() {
   };
 
   // Filter function based on active tab and search query
-  const filteredBids = bids.filter((bid) => {
-    // First filter by status tab
-    const statusFilter = activeTab === "all" || bid.status === activeTab;
+  const filteredBids = bids
+    ? bids.filter((bid) => {
+        // First filter by status tab
+        const statusFilter = activeTab === "all" || bid.status === activeTab;
 
-    // Then filter by search query (case insensitive)
-    const matchesSearch =
-      searchQuery === "" ||
-      bid.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      bid.description.toLowerCase().includes(searchQuery.toLowerCase());
+        // Then filter by search query (case insensitive)
+        const matchesSearch =
+          searchQuery === "" ||
+          bid.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          bid.description.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return statusFilter && matchesSearch;
-  });
+        return statusFilter && matchesSearch;
+      })
+    : [];
 
   // Sort the filtered bids
   const sortedBids = [...filteredBids].sort((a, b) => {
@@ -372,7 +386,9 @@ export function YourBidsContent() {
 
                       <div className="flex items-center gap-2">
                         <Button
-                          onClick={() => router.push(`your-bid/edit-bid/${bid.id}`)}
+                          onClick={() =>
+                            router.push(`your-bid/edit-bid/${bid.id}`)
+                          }
                           variant="outline"
                           className="border-zinc-700 text-zinc-300 hover:bg-zinc-700"
                         >
