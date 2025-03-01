@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { authConfig } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
@@ -9,7 +8,7 @@ export async function GET(
 ) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authConfig);
+    const session = await getAuthSession();
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
@@ -28,8 +27,6 @@ export async function GET(
         email: true,
         image: true,
         createdAt: true,
-        // You can add other fields as needed
-        // Don't include sensitive info like password hash
       },
     });
 
@@ -37,7 +34,7 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // You could add additional data like bid counts with a query like:
+    // Add bid statistics
     const activeBids = await prisma.bid.count({
       where: {
         userId: params.id,
@@ -52,7 +49,6 @@ export async function GET(
       },
     });
 
-    // Return user data with additional stats
     return NextResponse.json({
       ...user,
       activeBids,

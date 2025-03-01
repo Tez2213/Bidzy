@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { IconUser, IconEdit, IconInfoCircle } from "@tabler/icons-react";
 
-export const ProfileContent = () => {
+export function ProfileContent() {
   const { data: session } = useSession();
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);

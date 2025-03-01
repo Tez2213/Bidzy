@@ -1,17 +1,13 @@
-import { Inter } from "next/font/google";
-import { Metadata } from "next";
 import "./globals.css";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { ClientProvider } from "@/components/ClientProvider";
 
-// Initialize the font properly
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bidzy",
-  description: "Place your shipping bids with ease",
+  title: "Bidzy - Digital Bidding Platform",
+  description: "Find and bid on logistics projects",
 };
 
 export default function RootLayout({
@@ -20,8 +16,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="min-h-screen bg-zinc-900">{children}</body>
+    <html lang="en">
+      <body className={inter.className}>
+        <ClientProvider>{children}</ClientProvider>
+      </body>
     </html>
   );
 }
