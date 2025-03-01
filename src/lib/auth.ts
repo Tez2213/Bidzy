@@ -1,17 +1,26 @@
-import NextAuth, { getServerSession } from "next-auth";
+import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+
+// Add this import - it was missing:
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextApiRequest, NextApiResponse } from "next";
 
-export const authConfig = {
+// For debugging
+console.log({
+  googleClientId: !!process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+  nextauthUrl: process.env.NEXTAUTH_URL,
+});
+
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -52,7 +61,7 @@ export const authConfig = {
   ],
   callbacks: {
     async session({ session, token }) {
-      if (session.user && token.sub) {
+      if (session?.user) {
         session.user.id = token.sub;
       }
       return session;
@@ -64,24 +73,21 @@ export const authConfig = {
       return token;
     },
   },
-  session: {
-    strategy: "jwt",
-  },
   pages: {
     signIn: "/login",
     error: "/error",
   },
-  debug: true,
+  debug: true, // Enable debug for more information
 };
 
 // Helper to get session on server
-export const getAuthSession = () => getServerSession(authConfig);
+export const getAuthSession = () => getServerSession(authOptions);
 
 // Export auth for API routes
 export const auth = async () => {
-  return await getServerSession(authConfig);
+  return await getServerSession(authOptions);
 };
 
 // Default export for [...nextauth] route
-const handler = NextAuth(authConfig);
+const handler = NextAuth(authOptions);
 export default handler;
