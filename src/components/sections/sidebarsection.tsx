@@ -32,36 +32,36 @@ export function SidebarDemo({
 }) {
   const [open, setOpen] = useState(false);
   const links = [
-    {
+    { 
       label: "Home",
       href: "/home",
-      icon: <IconHome className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconHome className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Profile",
       href: "/profile",
-      icon: <IconUserBolt className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconUserBolt className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Your Bids",
       href: "/your-bid",
-      icon: <IconChartBar className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconChartBar className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Find Bids",
       href: "/findbid",
-      icon: <IconMessages className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconMessages className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "History",
       href: "/history",
-      icon: <IconSettings className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconSettings className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Logout",
-      href: "/logout",
+      href: "/",
       icon: (
-        <IconArrowLeft className="text-neutral-300 h-5 w-5 flex-shrink-0" />
+        <IconArrowLeft className="text-white h-5 w-5 flex-shrink-0" />
       ),
     },
   ];
@@ -290,16 +290,16 @@ const Dashboard = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center">
+      <section className="rounded-lg bg-gradient-to-r bg-zinc-800/50 border border-zinc-700/50 p-8 text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-          Ready to Start Bidding?
+          Ready to Place Items?
         </h2>
         <p className="text-white/80 mb-6 max-w-2xl mx-auto">
-          Join thousands of collectors and enthusiasts in our growing community.
+          Join thousands of collectors and Sellers in our growing community.
         </p>
-        <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-white/90 transition-colors">
+        <Link href="/create-bid" className="bg-black text-white px-6 py-3 rounded-lg font-medium">
           Get Started Now
-        </button>
+        </Link>
       </section>
     </div>
   );

@@ -5,6 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
+const BottomGradient = () => {
+  return (
+    <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-30" />
+  );
+};
+
 export function FindBidsContent() {
   return (
     <div className="p-4 md:p-6 lg:p-8 bg-zinc-900 min-h-screen">
@@ -55,8 +61,9 @@ export function FindBidsContent() {
               </div>
             </div>
 
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button className="relative w-full inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition-colors">
               Apply Filters
+              <BottomGradient />
             </Button>
           </div>
         </div>
@@ -90,8 +97,11 @@ export function FindBidsContent() {
                       <p className="text-zinc-400 text-sm">Current Bid</p>
                       <p className="text-green-500 font-semibold">$1,000</p>
                     </div>
-                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                    <Button 
+                      className="relative inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition-colors"
+                    >
                       Place Bid
+                      <BottomGradient />
                     </Button>
                   </div>
                 </div>
