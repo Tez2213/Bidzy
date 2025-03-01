@@ -92,52 +92,51 @@ export function CreateBidForm() {
 
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
 
-  // Find the handleSubmit function and update the redirect path
+  // Update the handleSubmit function in CreateBidForm
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Upload images if any
-      let imageUrls: string[] = [];
-      if (formData.images.length > 0) {
-        // Here you'd implement image upload to your storage provider
-        // For example: imageUrls = await uploadImages(formData.images);
-        // For now we'll skip this part
-      }
+      // Generate a unique ID for the bid
+      const bidId = `bid_${Date.now()}`;
 
-      // Prepare data for API
+      // Create bid object
       const bidData = {
+        id: bidId,
         ...formData,
-        images: imageUrls,
+        status: formData.saveAsDraft ? 'draft' : 'active',
+        createdAt: new Date().toISOString(),
+        bids: [] // Array to store received bids
       };
 
-      // Send data to API
-      const response = await fetch("/api/bids", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bidData),
-      });
+      // Get existing bids from localStorage
+      const existingBids = JSON.parse(localStorage.getItem('userBids') || '[]');
+      
+      // Add new bid
+      const updatedBids = [...existingBids, bidData];
+      
+      // Save to localStorage
+      localStorage.setItem('userBids', JSON.stringify(updatedBids));
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Something went wrong");
+      // Also save to available bids if not a draft
+      if (!formData.saveAsDraft) {
+        const existingAvailableBids = JSON.parse(localStorage.getItem('availableBids') || '[]');
+        const updatedAvailableBids = [...existingAvailableBids, bidData];
+        localStorage.setItem('availableBids', JSON.stringify(updatedAvailableBids));
       }
-
-      const result = await response.json();
 
       // Show success message
       setShowSuccess(true);
 
-      // Redirect after a delay to your-bid instead of bids
+      // Redirect after a delay
       setTimeout(() => {
-        router.push("/your-bid"); // Changed from '/bids' to '/your-bid'
+        router.push("/your-bid");
       }, 2000);
     } catch (error) {
       console.error("Error submitting form:", error);
-      setError(error.message || "Failed to create bid");
+      setError("Failed to create bid");
     } finally {
       setIsLoading(false);
     }
@@ -186,7 +185,7 @@ export function CreateBidForm() {
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData],
+          ...((formData[parent as keyof typeof formData] as object) || {}),
           [child]: value,
         },
       });

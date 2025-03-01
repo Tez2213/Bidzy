@@ -21,7 +21,7 @@ export function SpotlightPreview() {
         {/* Login Button */}
         <div className="mt-8 flex justify-center">
           <Link
-            href="/Sign-Up"
+            href="/home"
             className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white transition-all duration-200 ease-in-out rounded-full outline-none hover:text-black"
           >
             <span className="absolute inset-0 w-full h-full bg-white/10 border border-white/30 rounded-full group-hover:bg-white transition-all duration-200 ease-in-out"></span>

@@ -44,6 +44,149 @@ type FilterStatus =
   | "completed"
   | "expired";
 
+// Add this sample data after the Bid type definition and before the YourBidsContent component
+const sampleBids: Bid[] = [
+  // Published Bids
+  {
+    id: "pub_1",
+    title: "Gaming PC Transport to New York",
+    maxBudget: 500,
+    requiredDeliveryDate: "2024-04-01",
+    status: "published",
+    description: "Need to transport a gaming PC setup. Fragile items require careful handling.",
+    itemCategory: "electronics",
+    responses: 0,
+    createdAt: "2024-03-01T10:00:00Z"
+  },
+  {
+    id: "pub_2",
+    title: "Furniture Delivery to Boston",
+    maxBudget: 800,
+    requiredDeliveryDate: "2024-04-05",
+    status: "published",
+    description: "3-piece sofa set needs transportation. Items are new and boxed.",
+    itemCategory: "furniture",
+    responses: 0,
+    createdAt: "2024-03-02T15:30:00Z"
+  },
+  {
+    id: "pub_3",
+    title: "Art Pieces to Gallery",
+    maxBudget: 1200,
+    requiredDeliveryDate: "2024-04-10",
+    status: "published",
+    description: "5 framed paintings need secure transport to art gallery.",
+    itemCategory: "art",
+    responses: 0,
+    createdAt: "2024-03-03T09:15:00Z"
+  },
+
+  // Draft Bids
+  {
+    id: "draft_1",
+    title: "Office Equipment Relocation",
+    maxBudget: 1500,
+    requiredDeliveryDate: "2024-04-15",
+    status: "draft",
+    description: "Complete office setup including computers and furniture.",
+    itemCategory: "office",
+    responses: 0,
+    createdAt: "2024-03-01T11:20:00Z"
+  },
+  {
+    id: "draft_2",
+    title: "Musical Instruments Transport",
+    maxBudget: 600,
+    requiredDeliveryDate: "2024-04-20",
+    status: "draft",
+    description: "Piano and guitar need careful transportation.",
+    itemCategory: "music",
+    responses: 0,
+    createdAt: "2024-03-02T14:45:00Z"
+  },
+  {
+    id: "draft_3",
+    title: "Gym Equipment Moving",
+    maxBudget: 900,
+    requiredDeliveryDate: "2024-04-25",
+    status: "draft",
+    description: "Heavy gym equipment including treadmill and weights.",
+    itemCategory: "fitness",
+    responses: 0,
+    createdAt: "2024-03-03T16:30:00Z"
+  },
+
+  // Active Bids
+  {
+    id: "active_1",
+    title: "Restaurant Equipment Transport",
+    maxBudget: 2000,
+    requiredDeliveryDate: "2024-04-08",
+    status: "active",
+    description: "Commercial kitchen equipment needs moving.",
+    itemCategory: "commercial",
+    responses: 3,
+    createdAt: "2024-02-28T08:00:00Z"
+  },
+  {
+    id: "active_2",
+    title: "Antique Furniture Delivery",
+    maxBudget: 1800,
+    requiredDeliveryDate: "2024-04-12",
+    status: "active",
+    description: "Valuable antique furniture requires expert handling.",
+    itemCategory: "antiques",
+    responses: 5,
+    createdAt: "2024-02-29T13:20:00Z"
+  },
+  {
+    id: "active_3",
+    title: "Medical Equipment Relocation",
+    maxBudget: 2500,
+    requiredDeliveryDate: "2024-04-18",
+    status: "active",
+    description: "Sensitive medical equipment needs specialized transport.",
+    itemCategory: "medical",
+    responses: 4,
+    createdAt: "2024-03-01T09:45:00Z"
+  },
+
+  // Completed Bids
+  {
+    id: "complete_1",
+    title: "Home Moving Service",
+    maxBudget: 3000,
+    requiredDeliveryDate: "2024-02-15",
+    status: "completed",
+    description: "Full house move completed successfully.",
+    itemCategory: "residential",
+    responses: 8,
+    createdAt: "2024-02-01T10:00:00Z"
+  },
+  {
+    id: "complete_2",
+    title: "Vehicle Transport",
+    maxBudget: 1500,
+    requiredDeliveryDate: "2024-02-20",
+    status: "completed",
+    description: "Classic car transported with care.",
+    itemCategory: "automotive",
+    responses: 6,
+    createdAt: "2024-02-05T11:30:00Z"
+  },
+  {
+    id: "complete_3",
+    title: "Book Collection Moving",
+    maxBudget: 800,
+    requiredDeliveryDate: "2024-02-25",
+    status: "completed",
+    description: "Large book collection moved to new library.",
+    itemCategory: "books",
+    responses: 4,
+    createdAt: "2024-02-10T14:15:00Z"
+  },
+];
+
 export function YourBidsContent() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<FilterStatus>("all");
@@ -56,40 +199,14 @@ export function YourBidsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch bids from API with proper error handling
+  // Modify the useEffect hook in YourBidsContent to use the sample data
   useEffect(() => {
-    const fetchBids = async () => {
-      try {
-        setIsLoading(true);
-        // Use a try/catch to prevent issues if fetch fails
-        const response = await fetch("/api/bids").catch(() => null);
-
-        if (!response || !response.ok) {
-          // Handle case where fetch fails or returns error
-          console.log("Failed to fetch bids, using empty array");
-          setBids([]);
-          setError("Could not load bids. Please try again later.");
-          return;
-        }
-
-        try {
-          const data = await response.json();
-          setBids(Array.isArray(data) ? data : []);
-        } catch (e) {
-          console.error("Error parsing JSON:", e);
-          setBids([]);
-          setError("Could not parse bid data.");
-        }
-      } catch (err) {
-        console.error("Error in bid fetching:", err);
-        setBids([]);
-        setError("An unexpected error occurred.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBids();
+    setIsLoading(true);
+    // Simulate API call delay
+    setTimeout(() => {
+      setBids(sampleBids);
+      setIsLoading(false);
+    }, 1000);
   }, []);
 
   // Delete bid function
