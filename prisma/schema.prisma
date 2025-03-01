@@ -1,5 +1,8 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated/client"
+  // This ensures the Prisma client can run on edge functions in Vercel
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
