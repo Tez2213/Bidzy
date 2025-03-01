@@ -61,10 +61,7 @@ const LabelInputContainer = ({
 // Bottom gradient effect from your signupform
 const BottomGradient = () => {
   return (
-    <>
-      <span className="group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
-      <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
-    </>
+    <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-30" />
   );
 };
 
@@ -628,20 +625,20 @@ export function CreateBidForm() {
         </section>
 
         {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+        <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center" >
           <Button
             type="button"
-            variant="outline"
-            className="flex-1 py-6 text-neutral-200 border-zinc-700 hover:bg-zinc-800"
-            onClick={() => router.push("/bids")}
+            className="relative inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-4 text-sm font-medium text-white hover:bg-neutral-700 transition-colors"
+            onClick={() => router.push("/your-bid")}
             disabled={isLoading}
           >
             Cancel
+            <BottomGradient />
           </Button>
 
           <Button
             type="submit"
-            className="flex-1 py-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium"
+            className="relative inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-4 text-sm font-medium text-white hover:bg-neutral-700 transition-colors group/btn"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -650,9 +647,15 @@ export function CreateBidForm() {
                 <span>Processing...</span>
               </div>
             ) : formData.saveAsDraft ? (
-              "Save Draft"
+              <>
+                Save Draft
+                <BottomGradient />
+              </>
             ) : (
-              "Create Shipping Request"
+              <>
+                Create Shipping Request
+                <BottomGradient />
+              </>
             )}
           </Button>
         </div>

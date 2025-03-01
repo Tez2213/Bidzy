@@ -14,6 +14,9 @@ import {
   IconScale,
   IconCash,
   IconArrowRight,
+  IconCategory,
+  IconCoin,
+  IconClock,
 } from "@tabler/icons-react";
 
 const PriceCalculator = () => {
@@ -115,9 +118,9 @@ const PriceCalculator = () => {
                   id="pickup"
                   value={formData.pickup}
                   onChange={handleChange}
-                  placeholder="Mumbai"
+                  placeholder="Enter pickup location"
                   required
-                  icon={<IconMapPin className="h-4 w-4 text-zinc-500" />}
+                  icon={<IconMapPin className="h-4 w-4 text-zinc-400" />}
                   hint="Try: Mumbai, Delhi, Surat, Kolkata"
                 />
 
@@ -126,9 +129,9 @@ const PriceCalculator = () => {
                   id="delivery"
                   value={formData.delivery}
                   onChange={handleChange}
-                  placeholder="Delhi"
+                  placeholder="Enter delivery location"
                   required
-                  icon={<IconDelivery className="h-4 w-4 text-zinc-500" />}
+                  icon={<IconDelivery className="h-4 w-4 text-zinc-400" />}
                   hint="Try: Mumbai, Delhi, Surat, Kolkata"
                 />
 
@@ -137,12 +140,12 @@ const PriceCalculator = () => {
                   id="weight"
                   value={formData.weight}
                   onChange={handleChange}
-                  placeholder="10.5"
+                  placeholder="Enter package weight"
                   type="number"
                   min="0"
                   step="0.1"
                   required
-                  icon={<IconScale className="h-4 w-4 text-zinc-500" />}
+                  icon={<IconScale className="h-4 w-4 text-zinc-400" />}
                 />
 
                 <FormField
@@ -150,12 +153,12 @@ const PriceCalculator = () => {
                   id="value"
                   value={formData.value}
                   onChange={handleChange}
-                  placeholder="1000.00"
+                  placeholder="Enter invoice value"
                   type="number"
                   min="0"
                   step="0.01"
                   required
-                  icon={<IconCash className="h-4 w-4 text-zinc-500" />}
+                  icon={<IconCash className="h-4 w-4 text-zinc-400" />}
                 />
               </div>
 
@@ -297,7 +300,11 @@ const FormField = ({
         {label} {required && <span className="text-red-400">*</span>}
       </Label>
       <div className="relative">
-        {icon && <div className="absolute left-3 top-3">{icon}</div>}
+        {icon && (
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            {icon}
+          </div>
+        )}
         <Input
           id={id}
           value={value}
@@ -307,7 +314,7 @@ const FormField = ({
           min={min}
           step={step}
           required={required}
-          className="w-full pl-10 p-3 bg-zinc-700/50 text-white rounded-lg border border-zinc-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+          className="w-full pl-10 bg-zinc-700/50 text-white rounded-lg border border-zinc-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-zinc-400"
         />
       </div>
       {hint && <p className="text-xs text-zinc-400 mt-1">{hint}</p>}

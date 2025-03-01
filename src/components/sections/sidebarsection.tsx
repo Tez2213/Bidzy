@@ -24,34 +24,35 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import Image from 'next/image';
 
 export function SidebarDemo({ activeLink }: { activeLink?: string }) {
   const [open, setOpen] = useState(false);
   const links = [
-    {
+    { 
       label: "Home",
       href: "/home",
-      icon: <IconHome className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconHome className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Profile",
       href: "/profile",
-      icon: <IconUserBolt className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconUserBolt className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Your Bids",
       href: "/your-bid",
-      icon: <IconChartBar className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconChartBar className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Find Bids",
       href: "/findbid",
-      icon: <IconMessages className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconMessages className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "History",
       href: "/history",
-      icon: <IconSettings className="text-neutral-300 h-5 w-5 flex-shrink-0" />,
+      icon: <IconSettings className="text-white h-5 w-5 flex-shrink-0" />,
     },
     {
       label: "Price Calculator",
@@ -62,9 +63,9 @@ export function SidebarDemo({ activeLink }: { activeLink?: string }) {
     },
     {
       label: "Logout",
-      href: "/logout",
+      href: "/",
       icon: (
-        <IconArrowLeft className="text-neutral-300 h-5 w-5 flex-shrink-0" />
+        <IconArrowLeft className="text-white h-5 w-5 flex-shrink-0" />
       ),
     },
   ];
@@ -160,22 +161,46 @@ const Dashboard = () => {
       role: "Art Collector",
       content:
         "Bidzy has transformed how I participate in auctions. The platform is intuitive and reliable.",
-      image: "/avatars/sarah.jpg",
+      image: "/realistic-ai-female-face-in-brown-hair_2023-03-30-103218_pqpn.webp",
     },
     {
       name: "Michael Chen",
       role: "Antique Dealer",
       content:
         "The best bidding platform I've used. Secure, fast, and professional service.",
-      image: "/avatars/michael.jpg",
+      image: "/original.webp",
     },
     {
-      name: "Emma Wilson",
+      name: "John Wilson",
       role: "Vintage Enthusiast",
       content:
         "Love the real-time bidding feature. It makes the whole process exciting and transparent.",
-      image: "/avatars/emma.jpg",
+      image: "/positive-pleased-male-with-curly-hair_176532-8136.webp",
     },
+  ];
+
+  const auctions = [
+    {
+      id: 1,
+      title: "Classic Car Collection",
+      currentBid: "$2,500",
+      timeLeft: "8h 15m",
+      image: "/61s2jZwZIQL._AC_SX679_.jpg" // Add your image path here
+    },
+    {
+      id: 2,
+      title: "Vintage Piece",
+      currentBid: "$1,800",
+      timeLeft: "24h 45m",
+      image: "/61zYrox-H4L._AC_SX679_.jpg" // Add your image path here
+    },
+    {
+      id: 3,
+      title: "Owl Records",
+      currentBid: "$950",
+      timeLeft: "16h 20m",
+      image: "/71eacOTRB-L.webp" // Add your image path here
+    }
   ];
 
   return (
@@ -247,21 +272,32 @@ const Dashboard = () => {
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((item) => (
+          {auctions.map((auction) => (
             <div
-              key={item}
-              className="group relative rounded-lg overflow-hidden"
+              key={auction.id}
+              className="group relative rounded-lg overflow-hidden flex flex-col"
             >
-              <div className="aspect-[4/3] bg-zinc-800"></div>
-              <div className="p-4 bg-zinc-800/90 absolute inset-x-0 bottom-0">
+              <div className="h-[300px] bg-zinc-800 rounded-t-lg"> {/* Fixed height container */}
+                <Image
+                  src={auction.image}
+                  alt={auction.title}
+                  width={400}
+                  height={300}
+                  className="w-full h-full object-contain rounded-t-lg"
+                  style={{
+                    backgroundColor: '#27272a', // matching bg-zinc-800
+                  }}
+                />
+              </div>
+              <div className="p-4 bg-zinc-800 rounded-b-lg"> {/* Changed to normal div instead of absolute */}
                 <h3 className="text-white font-medium mb-1">
-                  Vintage Collection #{item}
+                  {auction.title}
                 </h3>
                 <div className="flex justify-between items-center">
                   <span className="text-zinc-400 text-sm">
-                    Current Bid: $1,234
+                    Current Bid: {auction.currentBid}
                   </span>
-                  <span className="text-blue-400 text-sm">12h 34m left</span>
+                  <span className="text-blue-400 text-sm">{auction.timeLeft} left</span>
                 </div>
               </div>
             </div>
@@ -281,7 +317,15 @@ const Dashboard = () => {
               className="p-6 rounded-lg bg-zinc-800/50 border border-zinc-700/50"
             >
               <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full bg-zinc-700 mr-4"></div>
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
+                  <Image
+                    src={testimonial.image}
+                    alt={testimonial.name}
+                    width={48}
+                    height={48}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <div>
                   <h3 className="text-white font-medium">{testimonial.name}</h3>
                   <p className="text-zinc-400 text-sm">{testimonial.role}</p>
@@ -294,16 +338,16 @@ const Dashboard = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center">
+      <section className="rounded-lg bg-gradient-to-r bg-zinc-800/50 border border-zinc-700/50 p-8 text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-          Ready to Start Bidding?
+          Ready to Place Items?
         </h2>
         <p className="text-white/80 mb-6 max-w-2xl mx-auto">
-          Join thousands of collectors and enthusiasts in our growing community.
+          Join thousands of collectors and Sellers in our growing community.
         </p>
-        <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-white/90 transition-colors">
+        <Link href="/create-bid" className="bg-black text-white px-6 py-3 rounded-lg font-medium">
           Get Started Now
-        </button>
+        </Link>
       </section>
     </div>
   );
@@ -317,7 +361,7 @@ export const Logo = () => {
       href="#"
       className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
     >
-      <div className="h-5 w-6 bg-zinc-800 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <IconBrandTabler className="h-5 w-5 text-white" />
       <motion.span
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -335,7 +379,7 @@ export const LogoIcon = () => {
       href="#"
       className="font-normal flex space-x-2 items-center text-sm text-white py-1 relative z-20"
     >
-      <div className="h-5 w-6 bg-zinc-800 rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <IconBrandTabler className="h-5 w-5 text-white" />
     </Link>
   );
 };
