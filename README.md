@@ -157,7 +157,7 @@ npm run start    # Start production server
 npm run lint     # Run ESLint
 ```
 
-## 🤝 Contributing
+## 🤝 Contributing  
 
 1. Fork the repository
 2. Create your feature branch: `git checkout -b feature/AmazingFeature`
