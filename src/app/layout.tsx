@@ -6,7 +6,7 @@ import { ClientProvider } from "@/components/ClientProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bidzy - Digital Bidding Platform",
+  title: "Bidzy",
   description: "Find and bid on logistics projects",
 };
 
