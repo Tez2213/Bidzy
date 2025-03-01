@@ -1,26 +1,20 @@
 import { NextResponse } from "next/server";
-import Link from "next/link";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+  apiVersion: "2025-02-24.acacia",
+});
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    // Your payment processing logic here
     
-    // Add your payment processing logic here
-    // Example: Integrate with Stripe or PayPal
-
-    return NextResponse.json({ 
-      success: true, 
-      message: "Payment processed successfully" 
-    });
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Payment failed" },
+      { error: "Payment processing failed" },
       { status: 500 }
     );
   }
 }
-
-// Add to your navigation component
-<Link href="/payment" className="...">
-  Payment
-</Link>
