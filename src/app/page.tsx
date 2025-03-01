@@ -7,6 +7,7 @@ import { BackgroundBeamsDemo } from "@/components/sections/BackgroundBeamsDemo";
 import { GlobeDemo } from "@/components/sections/githubglobe";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CozeChat from "@/components/CozeChat";
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
         </div>
       </main>
       <Footer />
+      <CozeChat projectId="landing" />
     </>
   );
 }

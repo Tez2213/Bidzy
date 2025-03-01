@@ -18,6 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { formatDistance } from "date-fns";
 
+const BottomGradient = () => {
+  return (
+    <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-30" />
+  );
+};
+
 type Bid = {
   id: string;
   title: string;
@@ -172,10 +178,11 @@ export function YourBidsContent() {
 
           <Button
             onClick={() => router.push("/create-bid")}
-            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+            className="relative inline-flex items-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition-colors"
           >
             <IconPlus size={18} />
             <span>Create Request</span>
+            <BottomGradient />
           </Button>
         </div>
 
@@ -307,10 +314,11 @@ export function YourBidsContent() {
                 </p>
                 <Button
                   onClick={() => router.push("/create-bid")}
-                  className="bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-2"
+                  className="relative inline-flex items-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition-colors"
                 >
                   <IconPlus size={18} />
                   <span>Create Your First Request</span>
+                  <BottomGradient />
                 </Button>
               </div>
             ) : (
