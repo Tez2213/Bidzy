@@ -3,6 +3,7 @@
 import React from "react";
 import { CreateBidForm } from "@/components/sections/createbidform";
 
+
 export default function CreateBidPage() {
   return (
     <>

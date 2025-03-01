@@ -188,12 +188,7 @@ export function SignupFormDemo() {
           </button>
         </div>
 
-        <p className="text-center text-sm text-neutral-400 mt-4">
-          Don&apos;t have an account?{" "}
-          <a href="/signup" className="text-blue-400 hover:text-blue-500">
-            Sign up
-          </a>
-        </p>
+       
       </form>
     </div>
   );
