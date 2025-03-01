@@ -1,12 +1,5 @@
 import React from "react";
-import dynamic from "next/dynamic";
 import ClientLiveBid from "@/components/ClientLiveBid";
-
-// Use dynamic import with ssr:false for the client component
-const LiveBidComponent = dynamic(
-  () => import("@/components/sections/LiveBidComponent"),
-  { ssr: false }
-);
 
 export default function LiveBidPage() {
   // These values would typically come from your API or database
@@ -17,9 +10,6 @@ export default function LiveBidPage() {
     minimumIncrement: 15,
   };
 
-  const bidData = {
-    // Your bid data here
-  };
-
-  return <ClientLiveBid bidData={bidData} />;
+  // Pass the mockAuctionData to your client component
+  return <ClientLiveBid bidData={mockAuctionData} />;
 }
