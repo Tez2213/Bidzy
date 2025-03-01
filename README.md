@@ -47,6 +47,7 @@ The logistics and shipping industry faces several critical challenges:
 
 
 ### The Impact
+
 By streamlining the logistics process, Bidzy aims to:
 - Reduce overall shipping costs.
 - Increase transparency and trust in the logistics chain.
@@ -96,7 +97,7 @@ By streamlining the logistics process, Bidzy aims to:
 2. *Install Dependencies:*
    bash
    npm install
-   # or
+    or
    yarn install
    
 
@@ -109,7 +110,7 @@ By streamlining the logistics process, Bidzy aims to:
 4. *Run the Development Server:*
    bash
    npm run dev
-   # or
+    or
    yarn dev
    
 
@@ -118,18 +119,18 @@ By streamlining the logistics process, Bidzy aims to:
 
 ## 📁 Project Structure
 
-plaintext
+```plaintext
 bidzy/
 ├── src/
-│   ├── app/                 # Next.js App Router pages
-│   ├── components/          # React Components 
-│   │   ├── sections/        # Page Sections (e.g., Dashboard, Profile, Bids)
-│   │   └── ui/              # Reusable UI Components (e.g., Sidebar, Buttons)
-│   ├── lib/                 # Utility functions
-│   └── styles/              # Global styles
-├── public/                  # Static assets
-└── types/                   # TypeScript definitions
-
+│   ├── app/                 # Next.js App Router
+│   ├── components/          # React Components
+│   │   ├── sections/       # Page Sections
+│   │   └── ui/            # Reusable UI Components
+│   ├── lib/               # Utility functions
+│   └── styles/            # Global styles
+├── public/                 # Static assets
+└── types/                 # TypeScript definitions
+```
 
 ## 🎯 Core Features
 
@@ -172,12 +173,12 @@ npm run lint     # Run ESLint
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🔗 Useful Links
 
-- *Live Site*: [http://your-live-link.com](http://your-live-link.com)
-- *GitHub Repository*: [http://github-repo-link.com](http://github-repo-link.com)
+- *Live Site*: https://bidzy.vercel.app/
+- *GitHub Repository*: https://github.com/Tez2213/Bidzy
   
 - *Site Architecture Diagrams*:
 - *Frontend Diagram*: https://tinyurl.com/2s3sssty
