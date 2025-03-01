@@ -35,9 +35,12 @@ const Navbar = () => {
               >
                 Contact
               </Link>
-              <button className="bg-gray-800 text-gray-200 px-4 py-2 rounded-md border border-blue-500 hover:bg-gray-700 hover:border-blue-400 transition-all duration-300 shadow-lg shadow-blue-500/20">
+              <Link href="/Sign-Up" className="bg-gray-800 text-gray-200 px-4 py-2 rounded-md border border-blue-500 hover:bg-gray-700 hover:border-blue-400 transition-all duration-300 shadow-lg shadow-blue-500/20">
+                Sign-Up
+              </Link>
+              <Link href="/Login" className="bg-gray-800 text-gray-200 px-4 py-2 rounded-md border border-blue-500 hover:bg-gray-700 hover:border-blue-400 transition-all duration-300 shadow-lg shadow-blue-500/20">
                 Login
-              </button>
+              </Link>
             </div>
           </div>
         </div>
