@@ -16,7 +16,9 @@ A sophisticated logistics and shipping bidding platform built with Next.js 14, e
 - **AI Chatbot**: Industry-specific chatbot for user assistance
 - **Blockchain Integration**: Smart contracts for secure transactions
 
-## Site Link - https://bidzy.vercel.app/
+## Site Link 
+
+- https://bidzy.vercel.app/
 
 ## Architecture Diagrams
 
@@ -175,4 +177,4 @@ npm run lint     # Run ESLint
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
