@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import Image from 'next/image';
 
 const BottomGradient = () => {
   return (
@@ -12,6 +13,37 @@ const BottomGradient = () => {
 };
 
 export function FindBidsContent() {
+  const activeBids = [
+    {
+      id: 1,
+      title: "Vintage Table",
+      currentBid: "$1,200",
+      timeLeft: "2h 15m",
+      image: "/Screenshot 2025-03-01 213838.png" // Add your image path
+    },
+    {
+      id: 2,
+      title: "Antique Bird Bead",
+      currentBid: "$800",
+      timeLeft: "5h 30m",
+      image: "/Screenshot 2025-03-01 213903.png" // Add your image path
+    },
+    {
+      id: 3,
+      title: "Classic Bottle Records",
+      currentBid: "$350",
+      timeLeft: "1h 45m",
+      image: "/Screenshot 2025-03-01 213927.png" // Add your image path
+    },
+    {
+      id: 4,
+      title: "Diamond Jewel",
+      currentBid: "$2,500",
+      timeLeft: "3h 20m",
+      image: "/Screenshot 2025-03-01 213958.png" // Add your image path
+    }
+  ];
+
   return (
     <div className="p-4 md:p-6 lg:p-8 bg-zinc-900 min-h-screen">
       <div className="flex flex-col md:flex-row gap-8">
@@ -81,28 +113,30 @@ export function FindBidsContent() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {[...Array(4)].map((_, idx) => (
+            {activeBids.map((bid) => (
               <div
-                key={idx}
-                className="bg-zinc-800 rounded-lg border border-zinc-700 overflow-hidden"
+                key={bid.id}
+                className="group relative rounded-lg overflow-hidden flex flex-col bg-zinc-800/50 border border-zinc-700/50"
               >
-                <div className="aspect-video bg-zinc-700" />
+                <div className="h-[200px] bg-zinc-800 rounded-t-lg">
+                  <Image
+                    src={bid.image}
+                    alt={bid.title}
+                    width={300}
+                    height={200}
+                    className="w-full h-full object-contain rounded-t-lg"
+                    style={{
+                      backgroundColor: '#27272a',
+                    }}
+                  />
+                </div>
                 <div className="p-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">Bid Item {idx + 1}</h3>
-                  <p className="text-zinc-400 text-sm mb-4">
-                    Description of the item goes here. This is a brief overview.
-                  </p>
+                  <h3 className="text-white font-medium mb-2">{bid.title}</h3>
                   <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-zinc-400 text-sm">Current Bid</p>
-                      <p className="text-green-500 font-semibold">$1,000</p>
-                    </div>
-                    <Button 
-                      className="relative inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 transition-colors"
-                    >
-                      Place Bid
-                      <BottomGradient />
-                    </Button>
+                    <span className="text-zinc-400 text-sm">
+                      Current Bid: {bid.currentBid}
+                    </span>
+                    <span className="text-blue-400 text-sm">{bid.timeLeft} left</span>
                   </div>
                 </div>
               </div>
