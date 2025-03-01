@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-export const authOptions = {
+export const authConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -20,7 +20,7 @@ export const authOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password required");
+          return null;
         }
 
         const user = await prisma.user.findUnique({
@@ -28,7 +28,7 @@ export const authOptions = {
         });
 
         if (!user || !user.password) {
-          throw new Error("User not found");
+          return null;
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -37,7 +37,7 @@ export const authOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error("Invalid password");
+          return null;
         }
 
         return {
@@ -72,3 +72,5 @@ export const authOptions = {
   },
   debug: process.env.NODE_ENV === "development",
 };
+
+export default NextAuth(authConfig);

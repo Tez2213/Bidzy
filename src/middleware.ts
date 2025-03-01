@@ -11,7 +11,10 @@ export function middleware(request: NextRequest) {
 
   // Get the token from the cookie - just check presence, not validity
   // Actual validation will happen in the API routes
-  const token = request.cookies.get("next-auth.session-token")?.value || "";
+  const token =
+    request.cookies.get("next-auth.session-token")?.value ||
+    request.cookies.get("__Secure-next-auth.session-token")?.value ||
+    "";
 
   // Redirect logic
   if (isPublicPath && token) {

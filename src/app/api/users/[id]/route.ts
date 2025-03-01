@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authConfig } from "@/lib/auth";
 
 export async function GET(
   req: NextRequest,
@@ -9,8 +9,8 @@ export async function GET(
 ) {
   try {
     // Check if user is authenticated
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const session = await getServerSession(authConfig);
+    if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
