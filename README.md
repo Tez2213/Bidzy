@@ -178,6 +178,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - *Live Site*: [http://your-live-link.com](http://your-live-link.com)
 - *GitHub Repository*: [http://github-repo-link.com](http://github-repo-link.com)
-- *Site Architecture*: [Link to architecture document]
+  
+- *Site Architecture Diagrams*:
+- *Frontend Diagram*: https://tinyurl.com/2s3sssty
+- *Backend Diagram*: https://tinyurl.com/mwx2ekrh
+- *APIs Diagram*: https://tinyurl.com/3u6twph4
 
 Stay tuned for our next advanced version of Bidzy!
