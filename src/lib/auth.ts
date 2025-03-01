@@ -71,7 +71,7 @@ export const authConfig = {
     signIn: "/login",
     error: "/error",
   },
-  debug: process.env.NODE_ENV === "development",
+  debug: true,
 };
 
 // Helper to get session on server
