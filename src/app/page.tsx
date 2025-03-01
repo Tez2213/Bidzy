@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SpotlightPreview } from "@/components/sections/SpotlightPreview";
 import { WobbleCardDemo } from "@/components/sections/WobbleCardDemo";
 import { BackgroundBeamsDemo } from "@/components/sections/BackgroundBeamsDemo";
@@ -10,6 +10,14 @@ import Footer from "@/components/Footer";
 import CozeChat from "@/components/CozeChat";
 
 export default function Home() {
+  const [sessionId, setSessionId] = useState("");
+
+  useEffect(() => {
+    // Generate a unique session ID when the component mounts
+    const uniqueId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setSessionId(uniqueId);
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -22,7 +30,7 @@ export default function Home() {
         </div>
       </main>
       <Footer />
-      <CozeChat projectId="landing" />
+      {sessionId && <CozeChat projectId={`landing_${sessionId}`} />}
     </>
   );
 }
