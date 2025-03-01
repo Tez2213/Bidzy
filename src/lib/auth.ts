@@ -1,15 +1,17 @@
-import NextAuth from "next-auth";
+import NextAuth, { getServerSession } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
+import { NextApiRequest, NextApiResponse } from "next";
 
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -18,51 +20,68 @@ export const authConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // For development, accept a test user only
-        if (
-          credentials?.email === "test@example.com" &&
-          credentials?.password === "password"
-        ) {
-          // Find or create a user
-          const user = await prisma.user.upsert({
-            where: { email: "test@example.com" },
-            update: {},
-            create: {
-              email: "test@example.com",
-              name: "Test User",
-            },
-          });
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-          };
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
-        return null;
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (!user || !user.password) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
       },
     }),
   ],
   callbacks: {
     async session({ session, token }) {
-      if (session?.user && token?.sub) {
+      if (session.user && token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
       }
       return token;
     },
   },
-  pages: {
-    signIn: "/login",
-  },
   session: {
     strategy: "jwt",
   },
+  pages: {
+    signIn: "/login",
+    error: "/error",
+  },
+  debug: process.env.NODE_ENV === "development",
 };
 
-export const { auth, handlers, signIn, signOut } = NextAuth(authConfig);
+// Helper to get session on server
+export const getAuthSession = () => getServerSession(authConfig);
+
+// Export auth for API routes
+export const auth = async () => {
+  return await getServerSession(authConfig);
+};
+
+// Default export for [...nextauth] route
+const handler = NextAuth(authConfig);
+export default handler;

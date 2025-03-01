@@ -1,39 +1,32 @@
 "use client";
 import React, { useState } from "react";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  IconBrandGoogle,
-  IconMail,
-  IconLock,
-  IconLogin,
-} from "@tabler/icons-react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { IconBrandGoogle } from "@tabler/icons-react";
 
 export function LoginFormDemo() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setError("");
 
     try {
       const result = await signIn("credentials", {
@@ -43,148 +36,128 @@ export function LoginFormDemo() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password. Try test@example.com / password");
-        setIsLoading(false);
-        return;
+        setError(result.error);
+      } else {
+        router.push("/home");
       }
-
-      // Redirect to home page
-      router.push("/home");
     } catch (error) {
-      setError("An unexpected error occurred. Please try again.");
-      console.error(error);
+      setError("An error occurred during sign in");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Google sign in handler
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
       await signIn("google", { callbackUrl: "/home" });
     } catch (error) {
-      console.error("Google sign in error:", error);
+      setError("An error occurred with Google sign in");
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-zinc-900/90 rounded-xl shadow-xl backdrop-blur-sm p-6 sm:p-8 border border-zinc-800">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-        <p className="text-zinc-400 mt-1">Sign in to continue to Bidzy</p>
-      </div>
+    <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-zinc-900">
+      <h2 className="font-bold text-xl text-neutral-200">Welcome to Bidzy</h2>
+      <p className="text-sm max-w-sm mt-1 text-neutral-300">
+        Login to your account to continue
+      </p>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 mt-4">
+          <p className="text-red-300 text-sm">{error}</p>
         </div>
       )}
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label
-              htmlFor="email"
-              className="text-zinc-300 text-sm font-medium"
-            >
-              Email Address
-            </Label>
-            <div className="relative">
-              <IconMail className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
-              <Input
-                id="email"
-                placeholder="you@example.com"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="bg-zinc-800 border-zinc-700 text-white pl-10 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label
-              htmlFor="password"
-              className="text-zinc-300 text-sm font-medium"
-            >
-              Password
-            </Label>
-            <div className="relative">
-              <IconLock className="absolute left-3 top-3 h-4 w-4 text-zinc-500" />
-              <Input
-                id="password"
-                placeholder="••••••••"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className="bg-zinc-800 border-zinc-700 text-white pl-10 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-            <div className="flex justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-blue-400 hover:text-blue-300"
-              >
-                Forgot password?
-              </Link>
-            </div>
-          </div>
+      <form className="my-8" onSubmit={handleSubmit}>
+        <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
+          <LabelInputContainer className="w-full">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              placeholder="johndoe@example.com"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </LabelInputContainer>
         </div>
 
-        <div className="text-xs text-zinc-400 px-1">
-          For demo: use test@example.com / password
-        </div>
+        <LabelInputContainer className="mb-8">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </LabelInputContainer>
 
         <button
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-medium rounded-lg transition-colors"
+          className="bg-gradient-to-br relative group/btn from-blue-600 to-blue-700 block w-full text-white rounded-lg px-4 py-3 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] disabled:opacity-70"
           type="submit"
           disabled={isLoading}
         >
-          {isLoading ? (
-            <>
-              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Signing in...</span>
-            </>
-          ) : (
-            <>
-              <span>Sign in</span>
-              <IconLogin className="h-4 w-4" />
-            </>
-          )}
+          {isLoading ? "Signing In..." : "Sign In"}
+          <BottomGradient />
         </button>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-700"></div>
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-zinc-900 text-zinc-500">
-              or continue with
-            </span>
-          </div>
+        <div className="flex items-center my-4">
+          <div className="flex-1 border-t border-zinc-600"></div>
+          <p className="mx-4 text-zinc-400">or</p>
+          <div className="flex-1 border-t border-zinc-600"></div>
         </div>
 
         <button
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 bg-zinc-800 hover:bg-zinc-750 text-white font-medium rounded-lg border border-zinc-700 transition-colors"
           type="button"
           onClick={handleGoogleSignIn}
+          className="flex items-center justify-center w-full px-4 py-3 mt-2 border border-zinc-600 rounded-lg text-white hover:bg-zinc-800 transition-all"
           disabled={isLoading}
         >
-          <IconBrandGoogle className="h-5 w-5" />
-          <span>Google</span>
+          <IconBrandGoogle className="w-5 h-5 mr-2" />
+          Sign in with Google
         </button>
-        <p className="text-center text-sm text-neutral-400 mt-4">
-          Don&apos;t have an account?{" "}
-          <a href="/Sign-Up" className="text-blue-400 hover:text-blue-500">
-            Sign up
-          </a>
-        </p>
 
-  
+        <div className="text-sm text-neutral-400 text-center mt-6">
+          Don&apos;t have an account?{" "}
+          <button
+            type="button"
+            className="text-neutral-300 hover:text-blue-400"
+            onClick={() => router.push("/Sign-Up")}
+          >
+            Sign Up
+          </button>
+        </div>
       </form>
     </div>
   );
 }
+
+const BottomGradient = () => {
+  return (
+    <>
+      <span className="group-hover/btn:opacity-100 block transition duration-500 opacity-0 absolute h-px w-full -bottom-px inset-x-0 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
+      <span className="group-hover/btn:opacity-100 blur-sm block transition duration-500 opacity-0 absolute h-px w-1/2 mx-auto -bottom-px inset-x-10 bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+    </>
+  );
+};
+
+const LabelInputContainer = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return (
+    <div className={cn("flex flex-col space-y-2 w-full", className)}>
+      {children}
+    </div>
+  );
+};

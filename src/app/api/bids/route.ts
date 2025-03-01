@@ -1,43 +1,61 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getAuthSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
 
-// This is a fallback API that returns empty data
-export async function GET() {
-  return NextResponse.json([]);
-}
+export async function GET(req: NextRequest) {
+  const session = await getAuthSession();
 
-// POST /api/bids - Create a new bid
-export async function POST(request: Request) {
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const json = await request.json();
-
-    // Create bid with the authenticated user's ID
-    const bid = await prisma.bid.create({
-      data: {
-        title: json.title,
-        description: json.description,
-        itemCategory: json.itemCategory,
-        originLocation: json.originLocation,
-        destinationLocation: json.destinationLocation,
-        packageWeight: parseFloat(json.packageWeight),
-        packageDimensions: json.packageDimensions,
-        fragile: Boolean(json.fragile),
-        maxBudget: parseFloat(json.maxBudget),
-        requiredDeliveryDate: new Date(json.requiredDeliveryDate),
-        status: json.saveAsDraft ? "draft" : "published",
+    const bids = await prisma.bid.findMany({
+      where: {
         userId: session.user.id,
-        images: json.images || [],
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    return NextResponse.json(bid, { status: 201 });
+    return NextResponse.json({ bids });
+  } catch (error) {
+    console.error("Error fetching bids:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch bids" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getAuthSession();
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const { amount, itemId } = body;
+
+    if (!amount || !itemId) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    const bid = await prisma.bid.create({
+      data: {
+        amount: parseFloat(amount),
+        userId: session.user.id,
+        itemId,
+      },
+    });
+
+    return NextResponse.json({ bid }, { status: 201 });
   } catch (error) {
     console.error("Error creating bid:", error);
     return NextResponse.json(
