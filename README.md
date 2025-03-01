@@ -20,31 +20,30 @@ The logistics and shipping industry faces several critical challenges:
 
 ### 🔥 How Bidzy Solves These Challenges  
 
- **Smart Bidding System**  
+#### **Smart Bidding System**  
 - Shippers can post shipping requests.  
 - Carriers can bid in real-time, ensuring competitive pricing.  
 
- **AI-Powered Price Estimator**  
+#### **AI-Powered Price Estimator**  
 - Uses machine learning to provide **intelligent cost estimations** before bidding starts.  
 
- **Blockchain-Powered Transactions**  
+#### **Blockchain-Powered Transactions**  
 - Implements **smart contracts** for **secure, transparent, and tamper-proof transactions**, reducing fraud and increasing trust.  
 
- **Automated Carrier Matching**  
+#### **Automated Carrier Matching**  
 - AI-driven algorithms recommend the best carriers based on cost, reliability, and past performance.  
 
- **Interactive Dashboard**  
+#### **Interactive Dashboard**  
 - Real-time tracking system for bids, shipments, and analytics.  
 - Provides insights into bid history and success rates.  
 
- **AI Chatbot Assistance**  
+#### **AI Chatbot Assistance**  
 - Industry-specific AI chatbot for real-time shipping queries, bidding tips, and logistics insights.  
 
- **Seamless UI/UX**  
+#### **Seamless UI/UX**  
 - Built with **Next.js 14 and Tailwind CSS** for a **modern, responsive, and intuitive user experience** across all devices.  
 
- **Bidzy transforms logistics into a fast, cost-effective, and transparent process, empowering both businesses and carriers to maximize efficiency!**  
-
+**Bidzy transforms logistics into a fast, cost-effective, and transparent process, empowering both businesses and carriers to maximize efficiency!**  
 
 ### The Impact
 
@@ -57,28 +56,28 @@ By streamlining the logistics process, Bidzy aims to:
 ## 🛠 Tech Stack
 
 ### Core Technologies
-- *Framework*: Next.js 14 (App Router)
-- *Language*: TypeScript 5.x
-- *Runtime*: Node.js 18+
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript 5.x
+- **Runtime**: Node.js 18+
 
 ### Frontend Architecture
-- *State Management*: React Hooks, Context API
-- *UI Components*: Shadcn/ui, Custom components
-- *Styling*: Tailwind CSS 3.x, CSS Modules, CSS Variables
+- **State Management**: React Hooks, Context API
+- **UI Components**: Shadcn/ui, Custom components
+- **Styling**: Tailwind CSS 3.x, CSS Modules, CSS Variables
 
 ### Design & Interactions
-- *Animations*: Framer Motion
-- *Icons*: Tabler Icons
-- *Theme*: Custom dark theme
-- *Layouts*: Responsive grid system and mobile-first approach
+- **Animations**: Framer Motion
+- **Icons**: Tabler Icons
+- **Theme**: Custom dark theme
+- **Layouts**: Responsive grid system and mobile-first approach
 
 ### AI & Machine Learning
-- *AI Chatbot*: Coze-powered chatbot trained on industry-specific data for deep insights and support.
-- *AI Price Calculator*: Intelligent price estimation based on real-time information.
+- **AI Chatbot**: Coze-powered chatbot trained on industry-specific data for deep insights and support.
+- **AI Price Calculator**: Intelligent price estimation based on real-time information.
 
 ### Blockchain Integration
-- *Smart Contracts*: Secure and transparent transactions built with Solidity.
-- *Decentralized Ledger*: For managing bids and ensuring trust between parties.
+- **Smart Contracts**: Secure and transparent transactions built with Solidity.
+- **Decentralized Ledger**: For managing bids and ensuring trust between parties.
 
 ## 🚀 Getting Started
 
@@ -88,33 +87,33 @@ By streamlining the logistics process, Bidzy aims to:
 
 ### Setup Instructions
 
-1. *Clone the Repository:*
-   bash
+1. **Clone the Repository:**
+   ```bash
    git clone https://github.com/yourusername/bidzy.git
    cd bidzy
-   
+   ```
 
-2. *Install Dependencies:*
-   bash
+2. **Install Dependencies:**
+   ```bash
    npm install
-    or
+   # or
    yarn install
-   
+   ```
 
 3. **Create a .env.local File:**
    Create a file named .env.local in the project root and add the following:
-   env
+   ```env
    NEXT_PUBLIC_APP_URL=http://localhost:3000
-   
+   ```
 
-4. *Run the Development Server:*
-   bash
+4. **Run the Development Server:**
+   ```bash
    npm run dev
-    or
+   # or
    yarn dev
-   
+   ```
 
-5. *Open the Application:*
+5. **Open the Application:**
    Navigate to [http://localhost:3000](http://localhost:3000) in your browser. For the optimal user experience, please view the site on a laptop.
 
 ## 📁 Project Structure
@@ -124,51 +123,60 @@ bidzy/
 ├── src/
 │   ├── app/                 # Next.js App Router
 │   ├── components/          # React Components
-│   │   ├── sections/       # Page Sections
-│   │   └── ui/            # Reusable UI Components
-│   ├── lib/               # Utility functions
-│   └── styles/            # Global styles
-├── public/                 # Static assets
-└── types/                 # TypeScript definitions
+│   │   ├── sections/        # Page Sections
+│   │   └── ui/              # Reusable UI Components
+│   ├── lib/                 # Utility functions
+│   └── styles/              # Global styles
+├── public/                  # Static assets
+└── types/                   # TypeScript definitions
 ```
 
 ## 🎯 Core Features
 
-1. *Shipping Request Management*
+1. **Shipping Request Management**
    - Post and manage detailed shipping requests.
    - Set budgets, timelines, and upload necessary documentation.
 
-2. *Dynamic Bidding System*
+2. **Dynamic Bidding System**
    - Real-time bid submissions and comparisons.
    - Streamlined communication between shippers and carriers.
 
-3. *User Dashboard*
+3. **User Dashboard**
    - Track active bids, success rates, and get insightful analytics.
    - Manage profiles with verification, ratings, and transaction history.
 
-4. *AI Chatbot & Price Calculator*
+4. **AI Chatbot & Price Calculator**
    - AI-driven chatbot for industry-specific advice and support.
    - Intelligent price calculator for accurate shipping cost estimations.
 
-5. *Blockchain Integration*
+5. **Blockchain Integration**
    - Secure smart contracts using Solidity.
    - Transparent, trustless bid transactions recorded on a decentralized ledger.
 
 ## 📝 Scripts
 
-bash
+```bash
 npm run dev      # Start development server
 npm run build    # Build for production
 npm run start    # Start production server
 npm run lint     # Run ESLint
-
+```
 
 ## 🤝 Contributing
 
 1. Fork the repository.
-2. Create your feature branch: git checkout -b feature/AmazingFeature.
-3. Commit your changes: git commit -m 'Add some AmazingFeature'.
-4. Push to the branch: git push origin feature/AmazingFeature.
+2. Create your feature branch:
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+3. Commit your changes:
+   ```bash
+   git commit -m 'Add some AmazingFeature'
+   ```
+4. Push to the branch:
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
 5. Open a pull request.
 
 ## 📄 License
@@ -177,12 +185,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🔗 Useful Links
 
-- *Live Site*: https://bidzy.vercel.app/
-- *GitHub Repository*: https://github.com/Tez2213/Bidzy
+- **Live Site**: https://bidzy.vercel.app/
+- **GitHub Repository**: https://github.com/Tez2213/Bidzy
   
-- *Site Architecture Diagrams*:
-- *Frontend Diagram*: https://tinyurl.com/2s3sssty
-- *Backend Diagram*: https://tinyurl.com/mwx2ekrh
-- *APIs Diagram*: https://tinyurl.com/3u6twph4
+- **Site Architecture Diagrams**:
+  - **Frontend Diagram**: https://tinyurl.com/2s3sssty
+  - **Backend Diagram**: https://tinyurl.com/mwx2ekrh
+  - **APIs Diagram**: https://tinyurl.com/3u6twph4
 
 Stay tuned for our next advanced version of Bidzy!
