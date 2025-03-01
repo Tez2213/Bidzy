@@ -11,10 +11,10 @@ export function WobbleCardDemo() {
         <WobbleCard containerClassName="col-span-1 lg:col-span-2 h-full bg-pink-800 min-h-[500px] lg:min-h-[300px]">
           <div className="max-w-xs">
             <h2 className="text-left text-balance text-base md:text-xl lg:text-3xl font-semibold tracking-[-0.015em] text-white">
-              Innovative AI Solutions
+            Real-Time Auctions
             </h2>
             <p className="mt-4 text-left text-base/6 text-neutral-200">
-              Transforming ideas into reality with cutting-edge AI technology.
+            Stay engaged with live bidding.
             </p>
           </div>
           {/* Replace image with div for now */}
@@ -24,20 +24,20 @@ export function WobbleCardDemo() {
         {/* Second Card - Medium Blue */}
         <WobbleCard containerClassName="col-span-1 bg-blue-800 min-h-[300px]">
           <h2 className="max-w-80 text-left text-balance text-base md:text-xl lg:text-3xl font-semibold tracking-[-0.015em] text-white">
-            Smart Analytics
+          Best Deals Guaranteed 
           </h2>
           <p className="mt-4 max-w-[26rem] text-left text-base/6 text-neutral-200">
-            Data-driven insights to power your business decisions.
+          Bid smart, save big.
           </p>
         </WobbleCard>
 
         {/* Third Card - Medium Purple */}
         <WobbleCard containerClassName="col-span-1 bg-purple-800 min-h-[300px]">
           <h2 className="max-w-80 text-left text-balance text-base md:text-xl lg:text-3xl font-semibold tracking-[-0.015em] text-white">
-            Cloud Solutions
+          User-Friendly Experience
           </h2>
           <p className="mt-4 max-w-[26rem] text-left text-base/6 text-neutral-200">
-            Scalable and secure cloud infrastructure for your applications.
+          Simple, fast, and accessible for everyone.
           </p>
         </WobbleCard>
 
@@ -45,10 +45,10 @@ export function WobbleCardDemo() {
         <WobbleCard containerClassName="col-span-1 lg:col-span-2 bg-emerald-800 min-h-[400px]">
           <div className="max-w-sm">
             <h2 className="text-left text-balance text-base md:text-xl lg:text-3xl font-semibold tracking-[-0.015em] text-white">
-              Sustainable Technology
+            Fair & Competitive System
             </h2>
             <p className="mt-4 text-left text-base/6 text-neutral-200">
-              Building eco-friendly solutions for a better tomorrow.
+            No bots, no rigging—only fair play for every bidder.
             </p>
           </div>
           <Image
@@ -64,11 +64,10 @@ export function WobbleCardDemo() {
         <WobbleCard containerClassName="col-span-1 lg:col-span-3 bg-gradient-to-r from-indigo-800 to-purple-800 min-h-[500px] lg:min-h-[300px]">
           <div className="max-w-lg">
             <h2 className="text-left text-balance text-base md:text-xl lg:text-3xl font-semibold tracking-[-0.015em] text-white">
-              Join Our Innovation Hub
+            Secure Payments & Transactions
             </h2>
             <p className="mt-4 text-left text-base/6 text-neutral-200">
-              Be part of the next generation of technology pioneers. Join our
-              community of innovators and creators.
+            Multiple payment options with end-to-end encryption
             </p>
           </div>
           <Image
