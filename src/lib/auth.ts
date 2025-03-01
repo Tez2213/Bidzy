@@ -1,15 +1,16 @@
 import NextAuth from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
 
-export const authConfig = {
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -18,51 +19,56 @@ export const authConfig = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        // For development, accept a test user only
-        if (
-          credentials?.email === "test@example.com" &&
-          credentials?.password === "password"
-        ) {
-          // Find or create a user
-          const user = await prisma.user.upsert({
-            where: { email: "test@example.com" },
-            update: {},
-            create: {
-              email: "test@example.com",
-              name: "Test User",
-            },
-          });
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-          };
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email and password required");
         }
-        return null;
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (!user || !user.password) {
+          throw new Error("User not found");
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!isPasswordValid) {
+          throw new Error("Invalid password");
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
       },
     }),
   ],
   callbacks: {
     async session({ session, token }) {
-      if (session?.user && token?.sub) {
+      if (session.user && token.sub) {
         session.user.id = token.sub;
       }
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
       }
       return token;
     },
   },
-  pages: {
-    signIn: "/login",
-  },
   session: {
     strategy: "jwt",
   },
+  pages: {
+    signIn: "/login",
+    error: "/error",
+  },
+  debug: process.env.NODE_ENV === "development",
 };
-
-export const { auth, handlers, signIn, signOut } = NextAuth(authConfig);

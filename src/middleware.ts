@@ -1,40 +1,44 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
 
-export async function middleware(request: NextRequest) {
-  const session = await auth();
-  const { pathname } = request.nextUrl;
+// This function can be marked `async` if using `await` inside
+export function middleware(request: NextRequest) {
+  // Simple auth check for protected routes - basic version that doesn't use Prisma
+  const path = request.nextUrl.pathname;
 
-  // Allow access to home page and login page without authentication
-  if (pathname === "/" || pathname === "/login") {
-    return NextResponse.next();
+  // Define which paths are protected and which are public
+  const isPublicPath = path === "/login" || path === "/Sign-Up" || path === "/";
+
+  // Get the token from the cookie - just check presence, not validity
+  // Actual validation will happen in the API routes
+  const token = request.cookies.get("next-auth.session-token")?.value || "";
+
+  // Redirect logic
+  if (isPublicPath && token) {
+    // Logged in users trying to access public pages get redirected to home
+    return NextResponse.redirect(new URL("/home", request.url));
   }
 
-  // Protect all other routes
-  if (!session) {
-    // Redirect unauthenticated users to login
-    const redirectUrl = new URL("/login", request.url);
-    // Optionally add the return URL as a query parameter
-    redirectUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(redirectUrl);
+  if (!isPublicPath && !token) {
+    // Non-logged in users trying to access protected pages get redirected to login
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
 }
 
-// Define which routes this middleware should run on
-// This will run the middleware on all routes except static files
+// Add the paths that should trigger this middleware
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * 1. /api/auth/* (auth API routes)
-     * 2. /_next/* (Next.js internal paths)
-     * 3. .*\\..* (files with extensions, e.g. favicon.ico)
-     * 4. / (home page)
-     * 5. /login (login page)
-     */
-    "/((?!api/auth|_next|.*\\..*|/|login).*)",
+    "/",
+    "/login",
+    "/Sign-Up",
+    "/home",
+    "/profile",
+    "/your-bid",
+    "/findbid",
+    "/history",
+    "/price-calculator",
+    // Don't add API routes here!
   ],
 };
