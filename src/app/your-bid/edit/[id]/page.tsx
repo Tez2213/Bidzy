@@ -2,14 +2,14 @@
 
 import React from "react";
 import { AuthGuard } from "@/components/AuthGuard";
+import { EditBidForm } from "@/components/sections/EditBidForm";
 import { SidebarDemo } from "@/components/sections/sidebarsection";
-import { YourBidsContent } from "@/components/sections/YourBidsContent";
 
-export default function YourBidsPage() {
+export default function EditBidPage({ params }: { params: { id: string } }) {
   return (
     <AuthGuard>
       <SidebarDemo activeLink="Your Bids">
-        <YourBidsContent />
+        <EditBidForm bidId={params.id} />
       </SidebarDemo>
     </AuthGuard>
   );
