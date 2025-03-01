@@ -8,13 +8,22 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    // Your payment processing logic here
-    
-    return NextResponse.json({ success: true });
+    // Payment processing logic would go here
+
+    return NextResponse.json({
+      success: true,
+      message: "Payment processed successfully",
+    });
   } catch (error) {
     return NextResponse.json(
-      { error: "Payment processing failed" },
+      { success: false, error: "Payment processing failed" },
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: "Payment API endpoint",
+  });
 }
