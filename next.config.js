@@ -10,6 +10,10 @@ const nextConfig = {
     // your project has type errors.
     ignoreBuildErrors: true,
   },
+  experimental: {
+    // Enable SWC minification
+    swcMinify: true,
+  },
 };
 
 module.exports = nextConfig;
