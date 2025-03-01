@@ -13,6 +13,8 @@ A sophisticated logistics and shipping bidding platform built with Next.js 14, e
 - **Price Calculator**: Estimate shipping costs
 - **Responsive Design**: Seamless experience across all devices
 - **Modern UI/UX**: Dark theme with fluid animations
+- **AI Chatbot**: Industry-specific chatbot for user assistance
+- **Blockchain Integration**: Smart contracts for secure transactions
 
 ## 🛠️ Tech Stack
 
@@ -47,6 +49,17 @@ A sophisticated logistics and shipping bidding platform built with Next.js 14, e
 - **Code Splitting**: Dynamic imports
 - **Font Optimization**: Next/font with Google Fonts
 - **Bundle Size**: Optimized with webpack
+
+### AI & Machine Learning
+- **AI Chatbot**: Coze AI chatbot for user assistance
+  - Trained on industry-specific data
+  - Provides deep insights and support
+- **AI-based Price Calculator**: Intelligent price estimation
+
+### Blockchain Integration
+- **Smart Contracts**: Built with Solidity
+  - Secure and transparent transactions
+  - Decentralized ledger for bid management
 
 ### Development Environment
 - **Package Manager**: npm/yarn
@@ -118,6 +131,14 @@ bidzy/
    - User verification
    - Rating system
    - Transaction history
+
+5. **AI Chatbot**
+   - Industry-specific assistance
+   - Deep insights and support
+
+6. **Blockchain Integration**
+   - Secure smart contracts
+   - Decentralized ledger
 
 ## 🔧 Configuration
 
