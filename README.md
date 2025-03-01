@@ -16,6 +16,12 @@ A sophisticated logistics and shipping bidding platform built with Next.js 14, e
 - **AI Chatbot**: Industry-specific chatbot for user assistance
 - **Blockchain Integration**: Smart contracts for secure transactions
 
+## Architecture Diagrams
+
+- **Frontend Diagram**: https://tinyurl.com/2s3sssty
+- **Backend Diagram**: https://tinyurl.com/mwx2ekrh
+- **APIs Diagram**: https://tinyurl.com/3u6twph4
+
 ## 🛠️ Tech Stack
 
 ### Core Technologies
