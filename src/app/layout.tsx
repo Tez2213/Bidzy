@@ -1,4 +1,5 @@
 import { Inter } from "next/font/google";
+import { Metadata } from "next";
 import "./globals.css";
 
 // Initialize the font properly
