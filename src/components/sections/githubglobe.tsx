@@ -412,11 +412,10 @@ export function GlobeDemo() {
           className="div"
         >
           <h2 className="text-center text-xl md:text-4xl font-bold text-white">
-            We sell soap worldwide
+          Global Bidding, Limitless Opportunities!
           </h2>
           <p className="text-center text-base md:text-lg font-normal text-neutral-200 max-w-md mt-2 mx-auto">
-            This globe is interactive and customizable. Have fun with it, and
-            don&apos;t forget to share it. :)
+          No borders, no limits—participate in real-time auctions from anywhere in the world.
           </p>
         </motion.div>
         <div className="absolute w-full bottom-0 inset-x-0 h-40 bg-gradient-to-b pointer-events-none select-none from-transparent to-black z-40" />
