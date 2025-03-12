@@ -29,36 +29,55 @@ interface LiveBidProps {
   currentUsername: string;
 }
 
+// Replace your current functions with these safer versions that check for window
 function getOrCreateUserId() {
-  // Try to get existing userId from localStorage
-  let userId = localStorage.getItem('bidzy_user_id');
+  // Only run in browser environment
+  if (typeof window === 'undefined') return 'temp-user-id';
   
-  // If no existing ID, create a new one and save it
-  if (!userId) {
-    userId = uuidv4();
-    localStorage.setItem('bidzy_user_id', userId);
+  try {
+    // Try to get existing userId from localStorage
+    let userId = localStorage.getItem('bidzy_user_id');
+    
+    // If no existing ID, create a new one and save it
+    if (!userId) {
+      userId = uuidv4();
+      localStorage.setItem('bidzy_user_id', userId);
+    }
+    
+    return userId;
+  } catch (error) {
+    // Fallback in case of errors (private browsing etc.)
+    console.error('Error accessing localStorage:', error);
+    return `user-${Math.random().toString(36).substring(2, 10)}`;
   }
-  
-  return userId;
 }
 
 function getOrCreateUsername() {
-  let username = localStorage.getItem('bidzy_username');
+  // Only run in browser environment
+  if (typeof window === 'undefined') return 'Guest User';
   
-  if (!username) {
-    // Generate a random name
-    const adjectives = ['Smart', 'Quick', 'Bold', 'Clever', 'Brave', 'Witty'];
-    const nouns = ['Bidder', 'Trader', 'Buyer', 'Player', 'Winner', 'Expert'];
+  try {
+    let username = localStorage.getItem('bidzy_username');
     
-    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-    const randomNum = Math.floor(Math.random() * 100);
+    if (!username) {
+      // Generate a random name
+      const adjectives = ['Smart', 'Quick', 'Bold', 'Clever', 'Brave', 'Witty'];
+      const nouns = ['Bidder', 'Trader', 'Buyer', 'Player', 'Winner', 'Expert'];
+      
+      const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+      const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+      const randomNum = Math.floor(Math.random() * 100);
+      
+      username = `${randomAdjective}${randomNoun}${randomNum}`;
+      localStorage.setItem('bidzy_username', username);
+    }
     
-    username = `${randomAdjective}${randomNoun}${randomNum}`;
-    localStorage.setItem('bidzy_username', username);
+    return username;
+  } catch (error) {
+    // Fallback in case of errors
+    console.error('Error accessing localStorage:', error);
+    return `Guest-${Math.random().toString(36).substring(2, 5)}`;
   }
-  
-  return username;
 }
 
 export const EnhancedLiveBidComponent: React.FC<LiveBidProps> = ({
@@ -69,9 +88,19 @@ export const EnhancedLiveBidComponent: React.FC<LiveBidProps> = ({
   currentUserId: propUserId = "currentUser", 
   currentUsername: propUsername = "You"
 }) => {
-  // Use the generated values instead of props
-  const [currentUserId] = useState(() => getOrCreateUserId());
-  const [currentUsername, setCurrentUsername] = useState(() => getOrCreateUsername());
+  // Use useEffect to handle localStorage operations safely
+  const [currentUserId, setCurrentUserId] = useState<string>(propUserId);
+  const [currentUsername, setCurrentUsername] = useState<string>(propUsername);
+  const userIdInitialized = useRef(false);
+  
+  useEffect(() => {
+    // Only run once and only in browser
+    if (!userIdInitialized.current) {
+      setCurrentUserId(getOrCreateUserId());
+      setCurrentUsername(getOrCreateUsername());
+      userIdInitialized.current = true;
+    }
+  }, []);
   
   // Add state for editing
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -389,9 +418,13 @@ export const EnhancedLiveBidComponent: React.FC<LiveBidProps> = ({
       <div className="live-bid-container max-w-6xl mx-auto">
         {/* Header with Auction Title */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Live Logistics Auction</h2>
-          <p className="text-zinc-400 mt-1">Project #L{auctionId.slice(-4)}</p>
-        </div>
+  <h2 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Live Logistics Auction</h2>
+  <p className="text-zinc-400 mt-1">Project #L{
+    typeof auctionId === 'string' && auctionId.length >= 4 
+      ? auctionId.slice(-4) 
+      : (typeof auctionId === 'string' ? auctionId : '0000')
+  }</p>
+</div>
         
         {/* Active Users Indicator */}
         <div className="flex justify-center items-center gap-6 mb-4">
