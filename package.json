@@ -7,7 +7,9 @@
     "build": "prisma generate && next build --no-lint",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "socket": "node socket-server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run socket\""
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.8.0",
@@ -57,6 +59,7 @@
     "@types/react-dom": "^19",
     "@types/stripe": "^8.0.416",
     "@types/uuid": "^10.0.0",
+    "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
     "postcss": "^8",
