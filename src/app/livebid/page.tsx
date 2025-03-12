@@ -1,21 +1,21 @@
 import React from "react";
-import Link from "next/link";
+import { EnhancedLiveBidComponent } from "@/components/sections/EnhancedLiveBidComponent";
 
 export default function LiveBidPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-zinc-800 to-zinc-900 p-6">
-      <h1 className="text-3xl font-bold text-white mb-6">
-        Live Bidding Coming Soon
-      </h1>
-      <p className="text-zinc-400 text-center mb-8">
-        Our live bidding feature is under development. Please check back later.
-      </p>
-      <Link
-        href="/"
-        className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors"
-      >
-        Go Back Home
-      </Link>
+    <div className="min-h-scree n bg-gradient-to-b from-zinc-50 to-zinc-100 p-6">
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8">Live Bidding</h1>
+        
+        <EnhancedLiveBidComponent 
+          auctionId="demo-auction-123"
+          initialTimeRemaining={60} // 5 minutes
+          startingBid={1000}
+          minimumDecrement={50}
+          currentUserId="user123"
+          currentUsername="Current User"
+        />
+      </div>
     </div>
   );
 }
