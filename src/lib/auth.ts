@@ -26,7 +26,17 @@ export const authOptions: AuthOptions = {
       return true;
     },
     async redirect({ url, baseUrl }) {
-      return baseUrl + '/home';
+      // List of allowed redirect URLs
+      const allowedUrls = [
+        'http://localhost:3000',
+        'https://bidzy.vercel.app',
+        'https://bidzy-production.up.railway.app'
+      ];
+      
+      if (allowedUrls.some(allowed => url.startsWith(allowed))) {
+        return url;
+      }
+      return baseUrl;
     }
   }
 };
