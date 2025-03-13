@@ -11,6 +11,8 @@ interface AuctionUpdateEvent {
   timeRemaining: number;
   currentBid: number;
   leaderboard: Bid[];
+  activeUsers?: number;
+  cooldownRemaining?: number;
 }
 
 interface CooldownEvent {
@@ -26,41 +28,77 @@ interface UserCountEvent {
 let socket: Socket | null = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
+let currentAuctionId: string | null = null;
 
-// Initialize socket connection
+// Initialize heartbeat
+let heartbeatInterval: NodeJS.Timeout | null = null;
+
+export const startHeartbeat = () => {
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  
+  heartbeatInterval = setInterval(() => {
+    if (socket && socket.connected) {
+      socket.emit('heartbeat');
+    }
+  }, 30000); // Every 30 seconds
+};
+
+export const stopHeartbeat = () => {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+};
+
+// Update the initializeSocket function
+
 export const initializeSocket = (userId: string, username?: string) => {
   if (socket) return socket;
   
   try {
-    // Use HTTP connection first - not websocket directly
-    socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001", {
+    // Get URL from environment variable with fallback
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    
+    console.log("Attempting to connect to socket server at:", socketUrl);
+    
+    if (!socketUrl) {
+      console.warn("⚠️ No SOCKET_URL provided in env variables. Check your .env.local file.");
+      console.warn("⚠️ Falling back to mock mode for development");
+      enableMockSocket();
+      return socket;
+    }
+    
+    if (socketUrl.includes('localhost') && process.env.NODE_ENV === 'development') {
+      console.warn(`⚠️ Using localhost (${socketUrl}) - make sure your local socket server is running`);
+      console.warn(`⚠️ Run 'npm run socket' in another terminal or use your Railway URL instead`);
+    }
+    
+    socket = io(socketUrl, {
       reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
       reconnectionDelay: 2000,
       query: { 
         userId,
         username: username || `User-${userId.slice(0, 5)}`
       },
-      // Important - try polling first, then websocket
       transports: ['polling', 'websocket']
     });
     
-    console.log("Initializing socket connection for user:", userId);
-
     socket.on("connect", () => {
-      console.log("Socket connected with ID:", socket?.id);
+      console.log("✅ Socket connected successfully to", socketUrl);
+      console.log("✅ Socket ID:", socket?.id);
       reconnectAttempts = 0;
     });
 
     socket.on("connect_error", (error) => {
-      console.warn("Socket connection error:", error.message);
+      console.warn("❌ Socket.IO connection error:", error.message);
+      console.log("Connection details:", {
+        url: socketUrl,
+        transports: ['polling', 'websocket'],
+        query: { userId, username: username || `User-${userId.slice(0, 5)}` }
+      });
       
-      if (!process.env.NEXT_PUBLIC_SOCKET_URL) {
-        console.info("No SOCKET_URL provided in env variables. Using default localhost:3001");
-      }
-      
-      // If we have a mock/fallback implementation, use it
       if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-        console.warn("Max reconnect attempts reached. Using fallback mock implementation");
+        console.warn("🔄 Max reconnect attempts reached. Using fallback mock implementation");
         enableMockSocket(); 
       }
       reconnectAttempts++;
@@ -68,10 +106,25 @@ export const initializeSocket = (userId: string, username?: string) => {
 
     socket.on("disconnect", (reason) => {
       console.log("Socket disconnected:", reason);
+      stopHeartbeat();
     });
 
     socket.on("error", (error) => {
       console.error("Socket error:", error);
+    });
+
+    socket.io.on("reconnect_attempt", (attempt) => {
+      console.log(`Socket reconnection attempt ${attempt}`);
+    });
+
+    socket.io.on("reconnect", (attempt) => {
+      console.log(`Socket reconnected after ${attempt} attempts`);
+      
+      // Re-join auction rooms after reconnection
+      if (currentAuctionId && socket) {
+        console.log(`Re-joining auction room: ${currentAuctionId}`);
+        socket.emit('join_auction', { auctionId: currentAuctionId });
+      }
     });
 
     return socket;
@@ -84,12 +137,24 @@ export const initializeSocket = (userId: string, username?: string) => {
 
 // Mock socket implementation for development/testing when server isn't available
 const enableMockSocket = () => {
-  // Implement mock behavior here
-  console.log("Using mock socket implementation");
+  if (socket) return;
   
-  // Create a mock socket with event emitters
-  const events: Record<string, any[]> = {};
+  console.log("[MOCK] Enabling mock socket for development");
   
+  // Mock data structure
+  const mockAuctions: Record<string, {
+    currentBid: number;
+    leaderboard: Bid[];
+    timeRemaining: number;
+    isActive: boolean;
+    cooldownRemaining: number;
+    activeUsers: number;
+  }> = {};
+  
+  // Event handlers
+  const events: Record<string, Function[]> = {};
+  
+  // Create mock socket object
   socket = {
     id: `mock-${Date.now()}`,
     connected: true,
@@ -97,43 +162,105 @@ const enableMockSocket = () => {
     emit: (event: string, ...args: any[]) => {
       console.log(`[MOCK] Emitting ${event}:`, args);
       
-      // Simulate server responses
+      // Handle join_auction
       if (event === 'join_auction') {
         const { auctionId } = args[0];
+        
+        // Initialize auction if needed
+        if (!mockAuctions[auctionId]) {
+          mockAuctions[auctionId] = {
+            currentBid: 1000,
+            leaderboard: [
+              { userId: 'user1', username: 'John Doe', amount: 990, timestamp: new Date(Date.now() - 50000) },
+              { userId: 'user2', username: 'Jane Smith', amount: 1000, timestamp: new Date(Date.now() - 120000) }
+            ],
+            timeRemaining: 1800,
+            isActive: true,
+            cooldownRemaining: 0,
+            activeUsers: 1
+          };
+        }
+        
+        // Send auction update
         setTimeout(() => {
           if (events['auction_update']) {
             events['auction_update'].forEach(callback => {
               callback({
                 auctionId,
-                currentBid: 1000,
-                leaderboard: [],
-                timeRemaining: 3600
+                currentBid: mockAuctions[auctionId].currentBid,
+                leaderboard: mockAuctions[auctionId].leaderboard,
+                timeRemaining: mockAuctions[auctionId].timeRemaining,
+                activeUsers: mockAuctions[auctionId].activeUsers,
+                cooldownRemaining: mockAuctions[auctionId].cooldownRemaining
               });
             });
           }
-        }, 200);
+        }, 500);
       }
       
+      // Handle place_bid
       if (event === 'place_bid') {
         const { auctionId, bid } = args[0];
-        setTimeout(() => {
-          if (events['new_bid']) {
-            events['new_bid'].forEach(callback => {
-              callback({ auctionId, bid });
-            });
-          }
+        
+        if (mockAuctions[auctionId]) {
+          mockAuctions[auctionId].leaderboard.push(bid);
+          mockAuctions[auctionId].leaderboard.sort((a, b) => a.amount - b.amount);
+          mockAuctions[auctionId].currentBid = mockAuctions[auctionId].leaderboard[0].amount;
+          mockAuctions[auctionId].cooldownRemaining = 30;
+          mockAuctions[auctionId].activeUsers = Math.min(5, mockAuctions[auctionId].activeUsers + 1);
           
-          if (events['auction_update']) {
-            events['auction_update'].forEach(callback => {
-              callback({
-                auctionId,
-                currentBid: bid.amount,
-                leaderboard: [bid],
-                timeRemaining: 3500
+          setTimeout(() => {
+            if (events['new_bid']) {
+              events['new_bid'].forEach(callback => {
+                callback({ auctionId, bid, cooldownRemaining: 30 });
               });
-            });
-          }
-        }, 200);
+            }
+            
+            if (events['auction_update']) {
+              events['auction_update'].forEach(callback => {
+                callback({
+                  auctionId,
+                  currentBid: mockAuctions[auctionId].currentBid,
+                  leaderboard: mockAuctions[auctionId].leaderboard,
+                  timeRemaining: mockAuctions[auctionId].timeRemaining,
+                  cooldownRemaining: 30,
+                  activeUsers: mockAuctions[auctionId].activeUsers
+                });
+              });
+            }
+            
+            // Simulate cooldown timer
+            let remainingCooldown = 30;
+            const cooldownInterval = setInterval(() => {
+              remainingCooldown--;
+              
+              if (events['cooldown_update']) {
+                events['cooldown_update'].forEach(callback => {
+                  callback({ auctionId, cooldownRemaining: remainingCooldown });
+                });
+              }
+              
+              if (remainingCooldown <= 0) {
+                clearInterval(cooldownInterval);
+                
+                // End auction if cooldown reaches zero
+                if (mockAuctions[auctionId].isActive) {
+                  mockAuctions[auctionId].isActive = false;
+                  
+                  if (events['auction_ended']) {
+                    events['auction_ended'].forEach(callback => {
+                      callback({
+                        auctionId,
+                        winner: mockAuctions[auctionId].leaderboard[0],
+                        reason: 'cooldown'
+                      });
+                    });
+                  }
+                }
+              }
+            }, 1000);
+          }, 300);
+        }
       }
       
       return true;
@@ -154,15 +281,61 @@ const enableMockSocket = () => {
       return socket as Socket;
     },
     
-    disconnect: () => {
-      return socket as Socket;
-    }
+    disconnect: () => socket as Socket,
+    disconnected: false,
+    io: { opts: {} } as any,
+    nsp: '/',
+    auth: {},
+    recovered: false
   } as unknown as Socket;
+  
+  // Start timer for mock auctions
+  setInterval(() => {
+    Object.keys(mockAuctions).forEach(auctionId => {
+      const auction = mockAuctions[auctionId];
+      
+      if (auction.isActive && auction.timeRemaining > 0) {
+        auction.timeRemaining--;
+        
+        // Update time every 5 seconds
+        if (auction.timeRemaining % 5 === 0 && events['auction_update']) {
+          events['auction_update'].forEach(callback => {
+            callback({
+              auctionId,
+              currentBid: auction.currentBid,
+              leaderboard: auction.leaderboard,
+              timeRemaining: auction.timeRemaining,
+              activeUsers: auction.activeUsers,
+              cooldownRemaining: auction.cooldownRemaining
+            });
+          });
+        }
+        
+        // End auction
+        if (auction.timeRemaining <= 0 && events['auction_ended']) {
+          auction.isActive = false;
+          
+          const winner = auction.leaderboard[0];
+          events['auction_ended'].forEach(callback => {
+            callback({ auctionId, winner, reason: 'timeout' });
+          });
+        }
+      }
+    });
+  }, 1000);
+  
+  // Trigger connect event
+  setTimeout(() => {
+    if (events['connect']) {
+      events['connect'].forEach(callback => callback());
+    }
+  }, 100);
 };
 
 // Helper functions to interact with socket
 export const joinAuction = (auctionId: string) => {
   if (!socket) return false;
+  currentAuctionId = auctionId;
   socket.emit("join_auction", { auctionId });
   return true;
 };
@@ -192,22 +365,10 @@ export const onAuctionUpdate = (callback: (data: AuctionUpdateEvent) => void) =>
   return () => socket?.off("auction_update", callback);
 };
 
-export const onAuctionEnded = (callback: (data: { auctionId: string, winner: Bid }) => void) => {
+export const onAuctionEnded = (callback: (data: { auctionId: string, winner: Bid, reason?: 'timeout' | 'cooldown' }) => void) => {
   if (!socket) return () => {};
   socket.on("auction_ended", callback);
   return () => socket?.off("auction_ended", callback);
-};
-
-export const onUserJoined = (callback: (data: { auctionId: string, userId: string, activeUsers: number }) => void) => {
-  if (!socket) return () => {};
-  socket.on("user_joined", callback);
-  return () => socket?.off("user_joined", callback);
-};
-
-export const onUserLeft = (callback: (data: { auctionId: string, userId: string, activeUsers: number }) => void) => {
-  if (!socket) return () => {};
-  socket.on("user_left", callback);
-  return () => socket?.off("user_left", callback);
 };
 
 export const onCooldownUpdate = (callback: (data: CooldownEvent) => void) => {
@@ -227,7 +388,3 @@ export const getSocketConnectionStatus = () => {
   if (!socket) return 'disconnected';
   return socket.connected ? 'connected' : 'disconnected';
 };
-
-// Then update your component to call it with both values
-// Example usage - uncomment and customize when implementing in a component
-// socket = initializeSocket(currentUserId, currentUsername);

@@ -68,6 +68,13 @@ export function SidebarDemo({ activeLink }: { activeLink?: string }) {
         <IconArrowLeft className="text-white h-5 w-5 flex-shrink-0" />
       ),
     },
+     {
+      label: "Livebid",
+      href: "/livebid",
+      icon: (
+        <IconArrowLeft className="text-white h-5 w-5 flex-shrink-0" />
+      ),
+    },
   ];
 
   return (

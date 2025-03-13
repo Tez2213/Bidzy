@@ -9,12 +9,13 @@ const server = http.createServer(app);
 
 // Create Socket.IO server with CORS configuration
 const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:3000", // Your Next.js app
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+    cors: {
+      // Add your Vercel domain to the allowed origins
+      origin: ["https://bidzyy.vercel.app", "http://localhost:3000"],
+      methods: ["GET", "POST"],
+      credentials: true
+    }
+  });
 
 // Store auctions and their data
 const auctions = {};

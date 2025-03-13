@@ -5,5 +5,8 @@
   "outputDirectory": ".next",
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "true"
-  }
+  },
+  "routes": [
+    { "src": "/livebid", "dest": "/livebid" }
+  ]
 }
