@@ -1,7 +1,9 @@
 /* filepath: /c:/Users/HP/OneDrive/Desktop/New bid/bidzy/src/components/sections/SpotlightPreview.tsx */
+"use client";
 import React from "react";
 import { Spotlight } from "../ui/spotlight";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 
 export function SpotlightPreview() {
   return (
@@ -20,14 +22,14 @@ export function SpotlightPreview() {
 
         {/* Login Button */}
         <div className="mt-8 flex justify-center">
-          <Link
-            href="/home"
+          <button
+            onClick={()=> signIn("google")}
             className="group relative inline-flex items-center justify-center px-8 py-3 text-lg font-medium text-white transition-all duration-200 ease-in-out rounded-full outline-none hover:text-black"
           >
             <span className="absolute inset-0 w-full h-full bg-white/10 border border-white/30 rounded-full group-hover:bg-white transition-all duration-200 ease-in-out"></span>
             <span className="relative">Get Started</span>
             <span className="absolute inset-x-0 w-1/2 mx-auto -bottom-px bg-gradient-to-r from-transparent via-blue-500 to-transparent h-px"></span>
-          </Link>
+          </button>
         </div>
       </div>
     </div>
