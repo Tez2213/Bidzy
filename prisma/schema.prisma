@@ -11,8 +11,14 @@ model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String?
   email         String?   @unique
-  emailVerified DateTime?
   image         String?
+  phone         String?
+  address       String?
+  bio           String?
+  dob           DateTime?
+  walletAddress String?
+  paymentMethods Json?      // Stores array of payment methods
+  accountActivity Json?     // Stores activity statistics
   accounts      Account[]
   sessions      Session[]
   password      String?
@@ -40,7 +46,6 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
-// Add this model
 model Session {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   sessionToken String   @unique
@@ -49,7 +54,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Add this model too for completeness
 model VerificationToken {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   identifier String
@@ -64,7 +68,7 @@ model Bid {
   userId       String   @db.ObjectId
   itemId       String   @db.ObjectId
   amount       Float
-  status       String   @default("ACTIVE")
+  status       String   @default("ACTIVE") // Can be "ACTIVE", "WON", or other states
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

@@ -93,7 +93,7 @@ export function SidebarDemo({ activeLink }: { activeLink?: string }) {
             <div className="border-t border-zinc-800 pt-4">
               <SidebarLink
                 link={{
-                  label: "John Doe",
+                  label: "Profile",
                   href: "/profile",
                   icon: (
                     <div className="h-7 w-7 rounded-full bg-zinc-800 flex items-center justify-center">

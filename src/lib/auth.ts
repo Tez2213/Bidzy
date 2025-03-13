@@ -5,6 +5,31 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { NextApiRequest, NextApiResponse } from "next";
+import { PrismaClient } from "@prisma/client";
+import { AuthOptions } from "next-auth";
+
+const prismaClient = new PrismaClient();
+
+export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(prismaClient),
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
+  ],
+  callbacks: {
+    async signIn({ user }) {
+      if (!user) {
+        return false;
+      }
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      return baseUrl + '/home';
+    }
+  }
+};
 
 export const authConfig = {
   adapter: PrismaAdapter(prisma),
