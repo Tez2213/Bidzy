@@ -78,6 +78,7 @@ model Bid {
   fragile              Boolean  @default(false)
   maxBudget            Float
   requiredDeliveryDate DateTime
+  liveBiddingStart     DateTime? // New field for scheduling live bidding
   insurance            Boolean  @default(false)
   status               String   @default("draft") // "draft", "pending_payment", "published", "active", "completed", "expired"
   imageUrls            String[]

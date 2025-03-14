@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -14,10 +14,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { message: "You must be logged in to create a bid" },
-        { status: 401 }
-      );
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
     // Get user from database
@@ -43,6 +40,7 @@ export async function POST(req: NextRequest) {
       fragile,
       maxBudget,
       requiredDeliveryDate,
+      liveBiddingStart, // Our new field
       insurance,
       status,
       imageUrls,
@@ -62,6 +60,7 @@ export async function POST(req: NextRequest) {
         fragile,
         maxBudget,
         requiredDeliveryDate: new Date(requiredDeliveryDate),
+        liveBiddingStart: liveBiddingStart ? new Date(liveBiddingStart) : null, // Handle the new field
         insurance,
         status: status === "draft" ? "draft" : "pending_payment",
         imageUrls: imageUrls || [],
@@ -69,11 +68,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ bid }, { status: 201 });
+    return NextResponse.json(
+      {
+        message: "Bid created successfully",
+        bid,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating bid:", error);
     return NextResponse.json(
-      { message: "Failed to create bid", error: String(error) },
+      { message: error.message || "Failed to create bid" },
       { status: 500 }
     );
   }
