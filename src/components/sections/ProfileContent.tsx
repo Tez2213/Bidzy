@@ -8,7 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useUserBids } from '@/hooks/useUserBids';
+import SidebarDemo from '../SidebarDemo';
 import { IconCamera, IconEdit, IconWallet, IconBox, IconClock, IconTrophy } from "@tabler/icons-react";
+import { connectWallet } from '@/lib/blockchain/wallet';
 
 export function ProfileContent() {
   const { data: session } = useSession();
@@ -32,6 +34,8 @@ export function ProfileContent() {
 
   const bidStats = useUserBids();
   const [isEditing, setIsEditing] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -43,6 +47,60 @@ export function ProfileContent() {
       }));
     }
   }, [session]);
+
+  useEffect(() => {
+    const checkWallet = async () => {
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        const address = window.ethereum.selectedAddress;
+        setWalletAddress(address);
+        setProfile(prev => ({
+          ...prev,
+          walletAddress: address
+        }));
+      }
+    };
+
+    // Add event listeners for MetaMask account changes
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (accounts.length === 0) {
+        // User disconnected wallet
+        setWalletAddress('');
+        setProfile(prev => ({
+          ...prev,
+          walletAddress: ''
+        }));
+      } else {
+        // User switched accounts
+        setWalletAddress(accounts[0]);
+        setProfile(prev => ({
+          ...prev,
+          walletAddress: accounts[0]
+        }));
+      }
+    };
+
+    const handleChainChanged = () => {
+      // Reload the page when chain changes
+      window.location.reload();
+    };
+
+    // Initial check
+    checkWallet();
+
+    // Add event listeners
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
+    }
+
+    // Cleanup event listeners
+    return () => {
+      if (window.ethereum) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
+      }
+    };
+  }, []); // Empty dependency array since we want this to run only once
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -87,9 +145,53 @@ export function ProfileContent() {
     }
   };
 
+  const handleUpdateWallet = async (address: string) => {
+    if (!session?.user) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch('/api/user/update-wallet', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        walletAddress: address,
+        userId: session.user.id 
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update wallet address');
+    }
+
+    return response.json();
+  };
+
+  const handleConnectWallet = async () => {
+    try {
+      setIsLoading(true);
+      if (!session?.user) return;
+
+      const address = await connectWallet();
+      await updateUserWallet(address, session);
+      setWalletAddress(address);
+      setProfile(prev => ({
+        ...prev,
+        walletAddress: address
+      }));
+    } catch (error) {
+      console.log('Wallet connection cancelled');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-black min-h-screen">
-      <div className="max-w-5xl mx-auto">
+    <div className="container mx-auto p-4">
+      {/* Profile Header Section */}
+      <div className="bg-gray-800 rounded-lg p-6">
         {/* Profile Header */}
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
           <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
@@ -260,6 +362,12 @@ export function ProfileContent() {
                         onChange={handleInputChange}
                         placeholder="+1 (234) 567-8900"
                         disabled={!isEditing}
+                        id="phone"
+                        name="phone"
+                        value={profile.phone}
+                        onChange={handleInputChange}
+                        placeholder="+1 (234) 567-8900"
+                        disabled={!isEditing}
                         className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-zinc-700 focus-visible:ring-offset-zinc-900"
                       />
                     </div>
@@ -304,15 +412,27 @@ export function ProfileContent() {
                           <IconWallet className="h-4 w-4 mr-1" />
                           Wallet Address
                         </label>
-                        <Input
-                          id="walletAddress"
-                          name="walletAddress"
-                          value={profile.walletAddress}
-                          onChange={handleInputChange}
-                          placeholder="0x..."
-                          disabled={!isEditing}
-                          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-zinc-700 focus-visible:ring-offset-zinc-900"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="walletAddress"
+                            name="walletAddress"
+                            value={walletAddress || 'No wallet connected'}
+                            disabled
+                            className="flex-1 bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+                          />
+                          <button
+                            onClick={handleConnectWallet}
+                            disabled={isLoading}
+                            className={`shrink-0 px-3 py-2 rounded-md ${
+                              walletAddress 
+                                ? 'bg-green-600 hover:bg-green-700' 
+                                : 'bg-blue-600 hover:bg-blue-700'
+                            } disabled:opacity-50 text-white flex items-center gap-2`}
+                          >
+                            <IconWallet size={16} />
+                            {isLoading ? 'Connecting...' : walletAddress ? 'Connected' : 'Connect'}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -351,10 +471,33 @@ export function ProfileContent() {
   );
 }
 
+export const updateUserWallet = async (walletAddress: string, session: any) => {
+  try {
+    const response = await fetch('/api/user/update-wallet', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: session.user.id,
+        walletAddress,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update wallet address');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating wallet:', error);
+    throw error;
+  }
+};
+
 export default function ProfilePage() {
   return (
-    <div className="flex">
-      <SidebarDemo activeLink="Profile" />
+    <div className="flex-1">
       <ProfileContent />
     </div>
   );
