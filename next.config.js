@@ -8,7 +8,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ["images.unsplash.com", "lh3.googleusercontent.com"],
+    domains: ["images.unsplash.com", "lh3.googleusercontent.com","example.com"],
   },
   // Add this to disable static generation for problematic pages
   output: "standalone",

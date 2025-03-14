@@ -1,24 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { FileUpload } from "@/components/ui/file-upload";
+import { toast } from "sonner";
 import {
   IconMapPin,
   IconPackage,
   IconTruck,
   IconCalendar,
   IconPhoto,
-  IconX,
   IconAlertCircle,
   IconClock,
-  IconCheckbox,
+  IconCheck,
+  IconX,
 } from "@tabler/icons-react";
+import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { Prisma } from "@prisma/client";
 
-// Add this new component for section headers
+// Section Header Component
 const SectionHeader = ({
   icon,
   title,
@@ -31,19 +34,16 @@ const SectionHeader = ({
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-2">
-        <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-          {icon}
-        </div>
-        <h3 className="text-lg font-semibold text-neutral-200">{title}</h3>
+        <div className="p-2 rounded-lg bg-zinc-800 text-zinc-300">{icon}</div>
+        <h3 className="text-lg font-semibold text-white">{title}</h3>
       </div>
       {description && (
-        <p className="text-sm text-neutral-400 ml-10">{description}</p>
+        <p className="text-sm text-zinc-400 ml-10">{description}</p>
       )}
     </div>
   );
 };
 
-// Reusing the LabelInputContainer from your signupform
 const LabelInputContainer = ({
   children,
   className,
@@ -67,9 +67,11 @@ const BottomGradient = () => {
 
 export function CreateBidForm() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -86,85 +88,185 @@ export function CreateBidForm() {
     fragile: false,
     maxBudget: "100",
     requiredDeliveryDate: "",
+    insurance: false,
     saveAsDraft: false,
     images: [] as File[],
   });
 
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
 
-  // Update the handleSubmit function in CreateBidForm
+  // File input reference for custom button
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!session?.user) {
+      toast.error("Please sign in to create a bid");
+      return;
+    }
+    
     setIsLoading(true);
-
+    setError(null);
+    
     try {
-      // Generate a unique ID for the bid
-      const bidId = `bid_${Date.now()}`;
-
-      // Create bid object
-      const bidData = {
-        id: bidId,
-        ...formData,
-        status: formData.saveAsDraft ? 'draft' : 'active',
-        createdAt: new Date().toISOString(),
-        bids: [] // Array to store received bids
-      };
-
-      // Get existing bids from localStorage
-      const existingBids = JSON.parse(localStorage.getItem('userBids') || '[]');
+      // Upload images first
+      const imageUrls: string[] = [];
       
-      // Add new bid
-      const updatedBids = [...existingBids, bidData];
-      
-      // Save to localStorage
-      localStorage.setItem('userBids', JSON.stringify(updatedBids));
-
-      // Also save to available bids if not a draft
-      if (!formData.saveAsDraft) {
-        const existingAvailableBids = JSON.parse(localStorage.getItem('availableBids') || '[]');
-        const updatedAvailableBids = [...existingAvailableBids, bidData];
-        localStorage.setItem('availableBids', JSON.stringify(updatedAvailableBids));
+      if (formData.images.length > 0) {
+        setUploadProgress(10);
+        
+        // For each image, upload to your storage
+        for (let i = 0; i < formData.images.length; i++) {
+          const file = formData.images[i];
+          
+          // Create form data for upload
+          const uploadData = new FormData();
+          uploadData.append('file', file);
+          
+          // Upload the image
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadData,
+          });
+          
+          if (!uploadResponse.ok) {
+            throw new Error('Failed to upload image');
+          }
+          
+          const uploadResult = await uploadResponse.json();
+          imageUrls.push(uploadResult.url);
+          
+          // Update progress
+          setUploadProgress(Math.round(((i + 1) / formData.images.length) * 50));
+        }
       }
-
-      // Show success message
-      setShowSuccess(true);
-
-      // Redirect after a delay
-      setTimeout(() => {
-        router.push("/your-bid");
-      }, 2000);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      setError("Failed to create bid");
+      
+      // Create the bid with uploaded image URLs
+      const response = await fetch('/api/bids/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          itemCategory: formData.itemCategory,
+          originLocation: formData.originLocation,
+          destinationLocation: formData.destinationLocation,
+          packageWeight: parseFloat(formData.packageWeight),
+          packageDimensions: {
+            length: parseFloat(formData.packageDimensions.length),
+            width: parseFloat(formData.packageDimensions.width),
+            height: parseFloat(formData.packageDimensions.height),
+          },
+          fragile: formData.fragile,
+          maxBudget: parseFloat(formData.maxBudget),
+          requiredDeliveryDate: formData.requiredDeliveryDate,
+          insurance: formData.insurance,
+          imageUrls: imageUrls,
+          status: formData.saveAsDraft ? 'draft' : 'pending_payment',
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create bid');
+      }
+      
+      const data = await response.json();
+      
+      // Handle redirect based on draft status
+      if (formData.saveAsDraft) {
+        setShowSuccess(true);
+        toast.success("Draft saved successfully!");
+        
+        setTimeout(() => {
+          router.push('/your-bid');
+        }, 1500);
+      } else {
+        router.push(`/payment?bidId=${data.bid.id}`);
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred while creating your bid");
+      toast.error(err.message || "Failed to create bid");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    if (e.target.files && e.target.files.length > 0) {
+      // Limit to 5 images
+      const selectedFiles = Array.from(e.target.files).slice(0, 5);
+      setFormData({ ...formData, images: selectedFiles });
 
-    // Update form data with the files
-    setFormData({ ...formData, images: files });
-
-    // Generate preview URLs
-    const newImageUrls: string[] = [];
-
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          newImageUrls.push(reader.result);
-          if (newImageUrls.length === files.length) {
-            setImagePreviewUrls(newImageUrls);
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      // Generate preview URLs
+      const urls: string[] = [];
+      selectedFiles.forEach((file) => {
+        const url = URL.createObjectURL(file);
+        urls.push(url);
+      });
+      setImagePreviewUrls(urls);
+    }
   };
 
+  // Add file input validation
+  const validateFile = (file: File) => {
+    // Check file type
+    if (!["image/jpeg", "image/png", "image/jpg"].includes(file.type)) {
+      toast.error("Only JPEG and PNG images are allowed");
+      return false;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    const newFiles = Array.from(e.target.files);
+    const validFiles = newFiles.filter(validateFile);
+
+    if (validFiles.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...validFiles],
+      }));
+    }
+  };
+
+  // Remove image from selection
+  const removeImage = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Handle removing an image
+  const handleRemoveImage = (index: number) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+
+    const newUrls = [...imagePreviewUrls];
+    URL.revokeObjectURL(newUrls[index]); // Clean up URL object
+    newUrls.splice(index, 1);
+
+    setFormData({ ...formData, images: newImages });
+    setImagePreviewUrls(newUrls);
+  };
+
+  // Handle other form field changes
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -172,493 +274,551 @@ export function CreateBidForm() {
   ) => {
     const { name, value, type } = e.target;
 
-    // Handle checkbox inputs
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
       setFormData({ ...formData, [name]: checked });
       return;
     }
 
-    // Handle nested properties (like dimensions)
+    // Handle nested properties (packageDimensions)
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
       setFormData({
         ...formData,
         [parent]: {
-          ...((formData[parent as keyof typeof formData] as object) || {}),
+          ...formData[parent as keyof typeof formData],
           [child]: value,
         },
       });
       return;
     }
 
-    // Handle simple properties
     setFormData({ ...formData, [name]: value });
   };
 
-  return (
-    <div className="max-w-4xl w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-zinc-900/80 backdrop-blur-sm mt-6">
-      {/* Success message */}
-      {showSuccess && (
-        <div className="mb-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
-          <h4 className="text-green-400 font-medium text-lg">
+  // Success state UI
+  if (showSuccess) {
+    return (
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-xl">
+        <div className="text-center space-y-6">
+          <div className="w-16 h-16 bg-green-900/30 rounded-full flex items-center justify-center mx-auto">
+            <IconCheck className="h-8 w-8 text-green-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-white">
             {formData.saveAsDraft
-              ? "Draft saved successfully!"
-              : "Bid created successfully!"}
-          </h4>
-          <p className="text-neutral-300 text-sm mt-1">
-            Redirecting you to your bids...
+              ? "Draft Saved!"
+              : "Shipping Request Created!"}
+          </h2>
+          <p className="text-zinc-300">
+            {formData.saveAsDraft
+              ? "Your shipping request has been saved as a draft."
+              : "Your shipping request has been successfully published."}
           </p>
+          <div className="pt-4">
+            <Button
+              onClick={() => router.push("/your-bid")}
+              className="bg-zinc-800 hover:bg-zinc-700 text-white w-full sm:w-auto"
+            >
+              View Your Bids
+            </Button>
+          </div>
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {/* Error message */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-center">
-          <h4 className="text-red-400 font-medium">Error</h4>
-          <p className="text-neutral-300 text-sm mt-1">{error}</p>
-        </div>
-      )}
-
-      <div className="mb-8">
-        <h2 className="font-bold text-3xl bg-gradient-to-br from-white to-neutral-400 bg-clip-text text-transparent">
+  return (
+    <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Page Title */}
+      <div className="text-center mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold text-white">
           Create Shipping Request
-        </h2>
-        <p className="text-neutral-400 text-sm mt-2">
-          Fill in the details below to create a new shipping request and receive
-          competitive bids from verified carriers.
+        </h1>
+        <p className="text-zinc-400 mt-2">
+          Fill in the details to get carriers bidding on your shipment
         </p>
       </div>
 
-      <form className="space-y-8" onSubmit={handleSubmit}>
-        {/* Basic Information Section */}
-        <section className="bg-zinc-800/50 rounded-xl p-6">
+      {/* Main Form Card */}
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 md:p-8 shadow-xl space-y-8 relative overflow-hidden">
+        <BottomGradient />
+
+        {/* Basic Information */}
+        <div>
           <SectionHeader
             icon={<IconPackage className="h-5 w-5" />}
-            title="Package Information"
-            description="Provide detailed information about your shipment"
+            title="Basic Information"
+            description="Provide details about your shipment"
           />
 
-          <div className="mb-8">
-            <LabelInputContainer className="mb-4">
-              <Label htmlFor="title" className="text-neutral-200">
-                Package Title
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <LabelInputContainer>
+              <Label htmlFor="title" className="text-zinc-300">
+                Title <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="title"
                 name="title"
-                placeholder="e.g., Gaming PC for Shipping"
                 value={formData.title}
                 onChange={handleInputChange}
-                className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
+                placeholder="e.g., Electronics Shipment - LA to NYC"
                 required
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
               />
             </LabelInputContainer>
 
-            <LabelInputContainer className="mb-4">
-              <Label htmlFor="description" className="text-neutral-200">
-                Package Description
-              </Label>
-              <textarea
-                id="description"
-                name="description"
-                rows={4}
-                placeholder="Describe the item(s) you want to ship in detail..."
-                value={formData.description}
-                onChange={handleInputChange}
-                className="rounded-md bg-zinc-800 border border-zinc-700 text-neutral-200 placeholder:text-neutral-500 p-2"
-                required
-              />
-            </LabelInputContainer>
-
-            <LabelInputContainer className="mb-4">
-              <Label htmlFor="itemCategory" className="text-neutral-200">
-                Category
+            <LabelInputContainer>
+              <Label htmlFor="itemCategory" className="text-zinc-300">
+                Item Category <span className="text-red-500">*</span>
               </Label>
               <select
                 id="itemCategory"
                 name="itemCategory"
                 value={formData.itemCategory}
                 onChange={handleInputChange}
-                className="rounded-md bg-zinc-800 border border-zinc-700 text-neutral-200 p-2"
                 required
+                className="h-10 rounded-md px-3 py-2 text-white bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-700"
               >
-                <option value="">Select a category</option>
                 <option value="electronics">Electronics</option>
                 <option value="furniture">Furniture</option>
                 <option value="clothing">Clothing</option>
-                <option value="documents">Documents</option>
-                <option value="fragile">Fragile Items</option>
-                <option value="perishable">Perishable Goods</option>
+                <option value="books">Books</option>
+                <option value="food">Food & Perishables</option>
                 <option value="other">Other</option>
               </select>
             </LabelInputContainer>
           </div>
-        </section>
 
-        {/* Location Section */}
-        <section className="bg-zinc-800/50 rounded-xl p-6">
+          <div className="mt-4">
+            <LabelInputContainer>
+              <Label htmlFor="description" className="text-zinc-300">
+                Description <span className="text-red-500">*</span>
+              </Label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Provide details about the items to be shipped..."
+                rows={4}
+                required
+                className="rounded-md px-3 py-2 text-white bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-700 w-full"
+              />
+            </LabelInputContainer>
+          </div>
+        </div>
+
+        {/* Locations */}
+        <div>
           <SectionHeader
             icon={<IconMapPin className="h-5 w-5" />}
-            title="Shipping Route"
-            description="Specify pickup and delivery locations"
+            title="Locations"
+            description="Origin and destination of your shipment"
           />
 
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <LabelInputContainer>
-                <Label htmlFor="originLocation" className="text-neutral-200">
-                  <IconMapPin className="inline-block h-4 w-4 mr-1" />
-                  Origin Location
-                </Label>
-                <Input
-                  id="originLocation"
-                  name="originLocation"
-                  placeholder="e.g., 123 Main St, New York, NY"
-                  value={formData.originLocation}
-                  onChange={handleInputChange}
-                  className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
-                  required
-                />
-              </LabelInputContainer>
-
-              <LabelInputContainer>
-                <Label
-                  htmlFor="destinationLocation"
-                  className="text-neutral-200"
-                >
-                  <IconMapPin className="inline-block h-4 w-4 mr-1" />
-                  Destination Location
-                </Label>
-                <Input
-                  id="destinationLocation"
-                  name="destinationLocation"
-                  placeholder="e.g., 456 Oak St, Los Angeles, CA"
-                  value={formData.destinationLocation}
-                  onChange={handleInputChange}
-                  className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
-                  required
-                />
-              </LabelInputContainer>
-            </div>
-          </div>
-        </section>
-
-        {/* Package Details Section */}
-        <section className="bg-zinc-800/50 rounded-xl p-6">
-          <SectionHeader
-            icon={<IconTruck className="h-5 w-5" />}
-            title="Package Specifications"
-            description="Enter the physical characteristics of your package"
-          />
-
-          <div className="mb-8">
-            <LabelInputContainer className="mb-4">
-              <Label htmlFor="packageWeight" className="text-neutral-200">
-                Package Weight (kg)
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <LabelInputContainer>
+              <Label htmlFor="originLocation" className="text-zinc-300">
+                Origin Location <span className="text-red-500">*</span>
               </Label>
               <Input
-                type="number"
+                id="originLocation"
+                name="originLocation"
+                value={formData.originLocation}
+                onChange={handleInputChange}
+                placeholder="e.g., Los Angeles, CA"
+                required
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+              />
+            </LabelInputContainer>
+
+            <LabelInputContainer>
+              <Label htmlFor="destinationLocation" className="text-zinc-300">
+                Destination Location <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="destinationLocation"
+                name="destinationLocation"
+                value={formData.destinationLocation}
+                onChange={handleInputChange}
+                placeholder="e.g., New York, NY"
+                required
+                className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500"
+              />
+            </LabelInputContainer>
+          </div>
+        </div>
+
+        {/* Package Details */}
+        <div>
+          <SectionHeader
+            icon={<IconTruck className="h-5 w-5" />}
+            title="Package Details"
+            description="Physical characteristics of your shipment"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <LabelInputContainer>
+              <Label htmlFor="packageWeight" className="text-zinc-300">
+                Package Weight (kg) <span className="text-red-500">*</span>
+              </Label>
+              <Input
                 id="packageWeight"
                 name="packageWeight"
-                placeholder="e.g., 5"
+                type="number"
                 min="0.1"
                 step="0.1"
                 value={formData.packageWeight}
                 onChange={handleInputChange}
-                className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
                 required
+                className="bg-zinc-800 border-zinc-700 text-white"
               />
             </LabelInputContainer>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <LabelInputContainer>
+              <Label className="text-zinc-300">Fragile Items</Label>
+              <div className="flex items-center space-x-2 h-10">
+                <input
+                  id="fragile"
+                  name="fragile"
+                  type="checkbox"
+                  checked={formData.fragile}
+                  onChange={handleInputChange}
+                  className="rounded text-zinc-600 h-5 w-5 focus:ring-zinc-700 border-zinc-700 bg-zinc-800"
+                />
+                <Label
+                  htmlFor="fragile"
+                  className="text-zinc-300 cursor-pointer"
+                >
+                  Contains fragile items
+                </Label>
+              </div>
+            </LabelInputContainer>
+          </div>
+
+          <div className="mt-4">
+            <Label className="text-zinc-300 block mb-2">
+              Package Dimensions (cm) <span className="text-red-500">*</span>
+            </Label>
+            <div className="grid grid-cols-3 gap-4">
               <LabelInputContainer>
-                <Label htmlFor="length" className="text-neutral-200">
-                  Length (cm)
+                <Label
+                  htmlFor="packageDimensions.length"
+                  className="text-zinc-400 text-sm"
+                >
+                  Length
                 </Label>
                 <Input
-                  type="number"
-                  id="length"
+                  id="packageDimensions.length"
                   name="packageDimensions.length"
-                  placeholder="e.g., 30"
+                  type="number"
                   min="1"
                   value={formData.packageDimensions.length}
                   onChange={handleInputChange}
-                  className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
                   required
+                  className="bg-zinc-800 border-zinc-700 text-white"
                 />
-              </LabelInputContainer>
-
-              <LabelInputContainer>
-                <Label htmlFor="width" className="text-neutral-200">
-                  Width (cm)
-                </Label>
-                <Input
-                  type="number"
-                  id="width"
-                  name="packageDimensions.width"
-                  placeholder="e.g., 20"
-                  min="1"
-                  value={formData.packageDimensions.width}
-                  onChange={handleInputChange}
-                  className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
-                  required
-                />
-              </LabelInputContainer>
-
-              <LabelInputContainer>
-                <Label htmlFor="height" className="text-neutral-200">
-                  Height (cm)
-                </Label>
-                <Input
-                  type="number"
-                  id="height"
-                  name="packageDimensions.height"
-                  placeholder="e.g., 15"
-                  min="1"
-                  value={formData.packageDimensions.height}
-                  onChange={handleInputChange}
-                  className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500"
-                  required
-                />
-              </LabelInputContainer>
-            </div>
-
-            <div className="flex items-center mb-4">
-              <input
-                type="checkbox"
-                id="fragile"
-                name="fragile"
-                checked={formData.fragile}
-                onChange={(e) =>
-                  setFormData({ ...formData, fragile: e.target.checked })
-                }
-                className="mr-2 h-4 w-4 bg-zinc-800 border-zinc-700 rounded"
-              />
-              <Label htmlFor="fragile" className="text-neutral-200">
-                This package contains fragile items
-              </Label>
-            </div>
-          </div>
-        </section>
-
-        {/* Budget and Timeline Section */}
-        <section className="bg-zinc-800/50 rounded-xl p-6">
-          <SectionHeader
-            icon={<IconClock className="h-5 w-5" />}
-            title="Budget & Timeline"
-            description="Set your budget and delivery requirements"
-          />
-
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row gap-4 mb-4">
-              <LabelInputContainer>
-                <Label htmlFor="maxBudget" className="text-neutral-200">
-                  Maximum Budget (USD)
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500">
-                    $
-                  </span>
-                  <Input
-                    type="number"
-                    id="maxBudget"
-                    name="maxBudget"
-                    placeholder="e.g., 100"
-                    min="1"
-                    value={formData.maxBudget}
-                    onChange={handleInputChange}
-                    className="bg-zinc-800 border-zinc-700 text-neutral-200 placeholder:text-neutral-500 pl-8"
-                    required
-                  />
-                </div>
               </LabelInputContainer>
 
               <LabelInputContainer>
                 <Label
-                  htmlFor="requiredDeliveryDate"
-                  className="text-neutral-200"
+                  htmlFor="packageDimensions.width"
+                  className="text-zinc-400 text-sm"
                 >
-                  <IconCalendar className="inline-block h-4 w-4 mr-1" />
-                  Required Delivery By
+                  Width
                 </Label>
                 <Input
-                  type="date"
-                  id="requiredDeliveryDate"
-                  name="requiredDeliveryDate"
-                  value={formData.requiredDeliveryDate}
+                  id="packageDimensions.width"
+                  name="packageDimensions.width"
+                  type="number"
+                  min="1"
+                  value={formData.packageDimensions.width}
                   onChange={handleInputChange}
-                  className="bg-zinc-800 border-zinc-700 text-neutral-200"
-                  min={new Date().toISOString().split("T")[0]}
                   required
+                  className="bg-zinc-800 border-zinc-700 text-white"
+                />
+              </LabelInputContainer>
+
+              <LabelInputContainer>
+                <Label
+                  htmlFor="packageDimensions.height"
+                  className="text-zinc-400 text-sm"
+                >
+                  Height
+                </Label>
+                <Input
+                  id="packageDimensions.height"
+                  name="packageDimensions.height"
+                  type="number"
+                  min="1"
+                  value={formData.packageDimensions.height}
+                  onChange={handleInputChange}
+                  required
+                  className="bg-zinc-800 border-zinc-700 text-white"
                 />
               </LabelInputContainer>
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* Image Upload Section */}
-        <section className="bg-zinc-800/50 rounded-xl p-6">
+        {/* Shipping Preferences */}
+        <div>
+          <SectionHeader
+            icon={<IconCalendar className="h-5 w-5" />}
+            title="Shipping Preferences"
+            description="Budget and timeline for your shipment"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <LabelInputContainer>
+              <Label htmlFor="maxBudget" className="text-zinc-300">
+                Maximum Budget ($) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="maxBudget"
+                name="maxBudget"
+                type="number"
+                min="1"
+                value={formData.maxBudget}
+                onChange={handleInputChange}
+                required
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </LabelInputContainer>
+
+            <LabelInputContainer>
+              <Label htmlFor="requiredDeliveryDate" className="text-zinc-300">
+                Required Delivery Date <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="requiredDeliveryDate"
+                name="requiredDeliveryDate"
+                type="date"
+                value={formData.requiredDeliveryDate}
+                onChange={handleInputChange}
+                required
+                min={new Date().toISOString().split("T")[0]}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </LabelInputContainer>
+          </div>
+
+          <div className="mt-4">
+            <LabelInputContainer>
+              <div className="flex items-center space-x-2">
+                <input
+                  id="insurance"
+                  name="insurance"
+                  type="checkbox"
+                  checked={formData.insurance}
+                  onChange={handleInputChange}
+                  className="rounded text-zinc-600 h-5 w-5 focus:ring-zinc-700 border-zinc-700 bg-zinc-800"
+                />
+                <Label
+                  htmlFor="insurance"
+                  className="text-zinc-300 cursor-pointer"
+                >
+                  Request insurance for this shipment
+                </Label>
+              </div>
+            </LabelInputContainer>
+          </div>
+        </div>
+
+        {/* Image Upload */}
+        <div>
           <SectionHeader
             icon={<IconPhoto className="h-5 w-5" />}
             title="Package Images"
-            description="Upload clear photos of your items (optional)"
+            description="Upload images of the items to be shipped (optional, max 5)"
           />
 
-          <div className="mb-8">
-            <LabelInputContainer className="mb-4">
-              <Label htmlFor="images" className="text-white">
-                Upload Images (optional)
-              </Label>
-              <div className="w-full border border-dashed bg-black border-zinc-800 rounded-lg">
-                <FileUpload
-                  onChange={(files) => {
-                    setFormData({ ...formData, images: files });
-
-                    // Generate preview URLs
-                    const newImageUrls: string[] = [];
-                    files.forEach((file) => {
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        if (typeof reader.result === "string") {
-                          newImageUrls.push(reader.result);
-                          if (newImageUrls.length === files.length) {
-                            setImagePreviewUrls(newImageUrls);
-                          }
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    });
-                  }}
+          <div className="mt-2">
+            <div className="flex items-center justify-center w-full">
+              <label
+                htmlFor="imageUpload"
+                className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-700 border-dashed rounded-lg cursor-pointer bg-zinc-800 hover:bg-zinc-700/50 transition-colors"
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <IconPhoto className="w-8 h-8 mb-3 text-zinc-400" />
+                  <p className="mb-2 text-sm text-zinc-400">
+                    <span className="font-semibold">Click to upload</span> or
+                    drag and drop
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    PNG, JPG or WEBP (MAX. 5 MB each)
+                  </p>
+                </div>
+                <input
+                  id="imageUpload"
+                  name="images"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                  ref={fileInputRef}
                 />
-              </div>
-              <p className="text-xs text-white mt-1">
-                Upload clear images of your package (max 5 images)
-              </p>
-            </LabelInputContainer>
+              </label>
+            </div>
+
+            {/* Image Previews */}
             {imagePreviewUrls.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 mt-4">
+              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                 {imagePreviewUrls.map((url, index) => (
                   <div
                     key={index}
-                    className="relative aspect-square rounded overflow-hidden"
+                    className="relative rounded-md overflow-hidden h-24 bg-zinc-800"
                   >
-                    <img
+                    <Image
                       src={url}
                       alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      fill
+                      style={{ objectFit: "cover" }}
+                      className="hover:opacity-90 transition-opacity"
                     />
                     <button
                       type="button"
-                      className="absolute top-1 right-1 bg-red-500 rounded-full p-1"
-                      onClick={() => {
-                        const newUrls = [...imagePreviewUrls];
-                        newUrls.splice(index, 1);
-                        setImagePreviewUrls(newUrls);
-
-                        const newFiles = [...formData.images];
-                        newFiles.splice(index, 1);
-                        setFormData({ ...formData, images: newFiles });
-                      }}
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded-full hover:bg-black/90 transition-colors"
                     >
-                      <IconX className="h-3 w-3 text-white" />
+                      <IconAlertCircle className="h-4 w-4" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </section>
+        </div>
 
-        {/* Additional Options */}
-        <section className="bg-zinc-800/50 rounded-xl p-6">
-          <SectionHeader
-            icon={<IconCheckbox className="h-5 w-5" />}
-            title="Additional Options"
-          />
+        {/* Add this inside your form, where you want the image upload section to appear */}
+        <div className="mb-6">
+          <label className="block text-white text-sm font-medium mb-2 flex items-center">
+            <IconPhoto className="mr-2" />
+            Package Photos (Optional)
+          </label>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-700/30">
-              <input
-                type="checkbox"
-                id="insurance"
-                className="w-4 h-4 rounded border-zinc-600"
-              />
-              <div>
-                <Label
-                  htmlFor="insurance"
-                  className="text-neutral-200 font-medium"
-                >
-                  Shipping Insurance
-                </Label>
-                <p className="text-sm text-neutral-400">
-                  Protect your package up to $1000 in case of damage or loss
-                </p>
+          <div className="mt-1 flex flex-col space-y-2">
+            {/* Hidden file input */}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/jpg"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+              className="hidden"
+              multiple
+            />
+
+            {/* Custom upload button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center transition-colors"
+            >
+              <IconPhoto className="mr-2" size={18} />
+              Add Photos
+            </button>
+
+            {/* Selected images preview */}
+            {formData.images.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                {formData.images.map((file, index) => (
+                  <div key={index} className="relative">
+                    <div className="aspect-square rounded-lg overflow-hidden bg-zinc-800">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Selected image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full"
+                    >
+                      <IconX size={16} />
+                    </button>
+                  </div>
+                ))}
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Error display */}
+        {error && (
+          <div className="bg-red-900/20 border border-red-900/50 rounded-lg p-4">
+            <p className="text-red-500 flex items-center gap-2">
+              <IconAlertCircle className="h-5 w-5" />
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* Upload Progress */}
+        {isLoading && uploadProgress > 0 && (
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-zinc-400">
+              <span>Uploading...</span>
+              <span>{uploadProgress}%</span>
             </div>
-
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-700/30">
-              <input
-                type="checkbox"
-                id="saveAsDraft"
-                name="saveAsDraft"
-                checked={formData.saveAsDraft}
-                onChange={(e) =>
-                  setFormData({ ...formData, saveAsDraft: e.target.checked })
-                }
-                className="w-4 h-4 rounded border-zinc-600"
-              />
-              <div>
-                <Label
-                  htmlFor="saveAsDraft"
-                  className="text-neutral-200 font-medium"
-                >
-                  Save as Draft
-                </Label>
-                <p className="text-sm text-neutral-400">
-                  Save this request and publish it later
-                </p>
-              </div>
+            <div className="w-full bg-zinc-800 rounded-full h-2.5">
+              <div
+                className="bg-zinc-600 h-2.5 rounded-full"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
             </div>
           </div>
-        </section>
+        )}
 
-        {/* Submit Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-4 justify-center" >
-          <Button
-            type="button"
-            className="relative inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-4 text-sm font-medium text-white hover:bg-neutral-700 transition-colors"
-            onClick={() => router.push("/your-bid")}
-            disabled={isLoading}
-          >
-            Cancel
-            <BottomGradient />
-          </Button>
+        {/* Form Actions */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+          <LabelInputContainer className="sm:w-auto">
+            <div className="flex items-center h-10">
+              <input
+                id="saveAsDraft"
+                name="saveAsDraft"
+                type="checkbox"
+                checked={formData.saveAsDraft}
+                onChange={handleInputChange}
+                className="rounded text-zinc-600 h-5 w-5 focus:ring-zinc-700 border-zinc-700 bg-zinc-800"
+              />
+              <Label
+                htmlFor="saveAsDraft"
+                className="ml-2 text-zinc-300 cursor-pointer"
+              >
+                Save as draft
+              </Label>
+            </div>
+          </LabelInputContainer>
 
-          <Button
-            type="submit"
-            className="relative inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700/50 bg-neutral-800 px-4 py-4 text-sm font-medium text-white hover:bg-neutral-700 transition-colors group/btn"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                <span>Processing...</span>
-              </div>
-            ) : formData.saveAsDraft ? (
-              <>
-                Save Draft
-                <BottomGradient />
-              </>
-            ) : (
-              <>
-                Create Shipping Request
-                <BottomGradient />
-              </>
-            )}
-          </Button>
+          <div className="flex-1 flex justify-end gap-4">
+            <Button
+              type="button"
+              onClick={() => router.back()}
+              variant="outline"
+              className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-zinc-800 hover:bg-zinc-700 text-white px-6"
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-zinc-500 border-t-zinc-200 rounded-full animate-spin"></div>
+                  {formData.saveAsDraft ? "Saving..." : "Creating..."}
+                </div>
+              ) : (
+                <>{formData.saveAsDraft ? "Save Draft" : "Create Request"}</>
+              )}
+            </Button>
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }

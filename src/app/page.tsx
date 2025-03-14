@@ -6,7 +6,7 @@ import { WobbleCardDemo } from "@/components/sections/WobbleCardDemo";
 import { BackgroundBeamsDemo } from "@/components/sections/BackgroundBeamsDemo";
 import { GlobeDemo } from "@/components/sections/githubglobe";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { Footer } from "@/components/Footer";
 import CozeChat from "@/components/CozeChat";
 
 export default function Home() {

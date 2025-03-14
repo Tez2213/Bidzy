@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import Image from "next/image";
 import { useUserBids } from '@/hooks/useUserBids';
+import { IconCamera, IconEdit, IconWallet, IconBox, IconClock, IconTrophy } from "@tabler/icons-react";
 
 export function ProfileContent() {
   const { data: session } = useSession();
@@ -30,6 +31,7 @@ export function ProfileContent() {
   });
 
   const bidStats = useUserBids();
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -76,6 +78,7 @@ export function ProfileContent() {
 
       if (response.ok) {
         toast.success("Profile updated successfully!");
+        setIsEditing(false);
       } else {
         toast.error("Failed to update profile");
       }
@@ -85,166 +88,265 @@ export function ProfileContent() {
   };
 
   return (
-    <div className="flex-1 p-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Existing image upload section */}
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="relative w-20 h-20">
-                {profile.image ? (
-                  <Image
-                    src={profile.image}
-                    alt="Profile"
-                    width={80}
-                    height={80}
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-500">No Image</span>
+    <div className="flex-1 p-4 sm:p-6 lg:p-8 bg-black min-h-screen">
+      <div className="max-w-5xl mx-auto">
+        {/* Profile Header */}
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+          <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
+          <Button 
+            variant={isEditing ? "default" : "outline"} 
+            onClick={() => setIsEditing(!isEditing)}
+            className={`mt-4 md:mt-0 ${isEditing ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'border-zinc-700 text-zinc-300 hover:bg-zinc-900'}`}
+          >
+            {isEditing ? "Cancel Editing" : "Edit Profile"}
+            <IconEdit className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Column - Profile Image & Stats */}
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="bg-zinc-900 border-zinc-800 shadow-md overflow-hidden">
+              <CardContent className="p-0">
+                <div className="bg-gradient-to-br from-zinc-800 to-black h-32 relative"></div>
+                <div className="px-6 pb-6 pt-12 -mt-16 flex flex-col items-center">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full border-4 border-zinc-900 overflow-hidden bg-zinc-800">
+                      {profile.image ? (
+                        <Image
+                          src={profile.image}
+                          alt="Profile"
+                          width={96}
+                          height={96}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-800 text-zinc-400">
+                          {profile.name ? profile.name[0].toUpperCase() : "U"}
+                        </div>
+                      )}
+                    </div>
+                    {isEditing && (
+                      <label 
+                        htmlFor="image-upload" 
+                        className="absolute bottom-0 right-0 bg-zinc-800 hover:bg-zinc-700 rounded-full p-2 cursor-pointer border border-zinc-700 transition-colors"
+                      >
+                        <IconCamera className="h-4 w-4 text-white" />
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <h2 className="text-xl font-semibold text-white mt-3">{profile.name || "User Name"}</h2>
+                  <p className="text-zinc-400 text-sm">{profile.email || "email@example.com"}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account Activity Card */}
+            <Card className="bg-zinc-900 border-zinc-800 shadow-md">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-white text-lg">Account Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-800">
+                    <div className="flex items-center">
+                      <div className="p-2 rounded-full bg-zinc-800 mr-3">
+                        <IconBox className="h-5 w-5 text-zinc-300" />
+                      </div>
+                      <span className="text-zinc-300">Total Bids</span>
+                    </div>
+                    <span className="text-xl font-semibold text-white">{bidStats.totalBids}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-800">
+                    <div className="flex items-center">
+                      <div className="p-2 rounded-full bg-zinc-800 mr-3">
+                        <IconClock className="h-5 w-5 text-zinc-300" />
+                      </div>
+                      <span className="text-zinc-300">Active Bids</span>
+                    </div>
+                    <span className="text-xl font-semibold text-white">{bidStats.activeBids}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-800/50 border border-zinc-800">
+                    <div className="flex items-center">
+                      <div className="p-2 rounded-full bg-zinc-800 mr-3">
+                        <IconTrophy className="h-5 w-5 text-zinc-300" />
+                      </div>
+                      <span className="text-zinc-300">Won Bids</span>
+                    </div>
+                    <span className="text-xl font-semibold text-white">{bidStats.wonBids}</span>
+                  </div>
+                </div>
+                
+                {bidStats.lastActive && (
+                  <div className="mt-4 text-sm text-zinc-500 flex items-center">
+                    <IconClock className="h-4 w-4 mr-1" />
+                    Last Active: {new Date(bidStats.lastActive).toLocaleDateString()}
                   </div>
                 )}
-                <label htmlFor="image-upload" className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-1 cursor-pointer">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
-                </label>
-                <input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Personal Information Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Personal Information</h3>
-                
-                <div className="space-y-2">
-                  <label htmlFor="name">Full Name</label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={profile.name}
-                    onChange={handleInputChange}
-                    placeholder="John Doe"
-                  />
-                </div>
+          {/* Right Column - Profile Details Form */}
+          <div className="lg:col-span-3">
+            <Card className="bg-zinc-900 border-zinc-800 shadow-md">
+              <CardHeader className="border-b border-zinc-800 pb-4">
+                <CardTitle className="text-white">Personal Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6 pt-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="name" className="text-zinc-300 text-sm font-medium">
+                        Full Name
+                      </label>
+                      <Input
+                        id="name"
+                        name="name"
+                        value={profile.name}
+                        onChange={handleInputChange}
+                        placeholder="John Doe"
+                        disabled={!isEditing}
+                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-zinc-700 focus-visible:ring-offset-zinc-900"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="dob">Date of Birth</label>
-                  <Input
-                    id="dob"
-                    name="dob"
-                    type="date"
-                    value={profile.dob}
-                    onChange={handleInputChange}
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="text-zinc-300 text-sm font-medium">
+                        Email Address
+                      </label>
+                      <Input
+                        id="email"
+                        name="email"
+                        value={profile.email}
+                        disabled
+                        className="bg-zinc-800/50 border-zinc-700 text-zinc-400"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="email">Email ID</label>
-                  <Input
-                    id="email"
-                    name="email"
-                    value={profile.email}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <label htmlFor="dob" className="text-zinc-300 text-sm font-medium">
+                        Date of Birth
+                      </label>
+                      <Input
+                        id="dob"
+                        name="dob"
+                        type="date"
+                        value={profile.dob}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className="bg-zinc-800 border-zinc-700 text-white focus-visible:ring-zinc-700 focus-visible:ring-offset-zinc-900"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="phone">Phone Number</label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={profile.phone}
-                    onChange={handleInputChange}
-                    placeholder="+1 (234) 567-8900"
-                  />
-                </div>
-              </div>
-
-              {/* Address and Payment Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Address & Payment</h3>
-                
-                <div className="space-y-2">
-                  <label htmlFor="address">Address</label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    value={profile.address}
-                    onChange={handleInputChange}
-                    className="w-full min-h-[80px] p-2 border rounded-md"
-                    placeholder="Enter your full address"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="walletAddress">Wallet Address</label>
-                  <Input
-                    id="walletAddress"
-                    name="walletAddress"
-                    value={profile.walletAddress}
-                    onChange={handleInputChange}
-                    placeholder="0x..."
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label>Payment Methods</label>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {/* Add payment method logic */}}
-                    >
-                      + Add Payment Method
-                    </Button>
+                    <div className="space-y-2">
+                      <label htmlFor="phone" className="text-zinc-300 text-sm font-medium">
+                        Phone Number
+                      </label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        value={profile.phone}
+                        onChange={handleInputChange}
+                        placeholder="+1 (234) 567-8900"
+                        disabled={!isEditing}
+                        className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-zinc-700 focus-visible:ring-offset-zinc-900"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2 md:col-span-2">
+                      <label htmlFor="bio" className="text-zinc-300 text-sm font-medium">
+                        Bio
+                      </label>
+                      <textarea
+                        id="bio"
+                        name="bio"
+                        value={profile.bio}
+                        onChange={handleInputChange}
+                        placeholder="Tell us a little about yourself..."
+                        disabled={!isEditing}
+                        className="w-full min-h-[80px] p-2 rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Account Activity Section */}
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Account Activity</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm text-gray-600">Total Bids</div>
-                  <div className="text-2xl font-semibold">{bidStats.totalBids}</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm text-gray-600">Active Bids</div>
-                  <div className="text-2xl font-semibold">{bidStats.activeBids}</div>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm text-gray-600">Won Bids</div>
-                  <div className="text-2xl font-semibold">{bidStats.wonBids}</div>
-                </div>
-              </div>
-              {bidStats.lastActive && (
-                <div className="mt-4 text-sm text-gray-600">
-                  Last Activity: {new Date(bidStats.lastActive).toLocaleDateString()}
-                </div>
-              )}
-            </div>
+                  <div className="border-t border-zinc-800 my-6 pt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4">Address & Payment</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                      <div className="space-y-2 md:col-span-2">
+                        <label htmlFor="address" className="text-zinc-300 text-sm font-medium">
+                          Address
+                        </label>
+                        <textarea
+                          id="address"
+                          name="address"
+                          value={profile.address}
+                          onChange={handleInputChange}
+                          placeholder="Enter your full address"
+                          disabled={!isEditing}
+                          className="w-full min-h-[80px] p-2 rounded-md bg-zinc-800 border border-zinc-700 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-700"
+                        />
+                      </div>
 
-            <div className="flex justify-end">
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                      <div className="space-y-2">
+                        <label htmlFor="walletAddress" className="text-zinc-300 text-sm font-medium flex items-center">
+                          <IconWallet className="h-4 w-4 mr-1" />
+                          Wallet Address
+                        </label>
+                        <Input
+                          id="walletAddress"
+                          name="walletAddress"
+                          value={profile.walletAddress}
+                          onChange={handleInputChange}
+                          placeholder="0x..."
+                          disabled={!isEditing}
+                          className="bg-zinc-800 border-zinc-700 text-white placeholder:text-zinc-500 focus-visible:ring-zinc-700 focus-visible:ring-offset-zinc-900"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-zinc-300 text-sm font-medium">Payment Methods</label>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            disabled={!isEditing}
+                            className="bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700 disabled:opacity-50"
+                            onClick={() => {/* Add payment method logic */}}
+                          >
+                            + Add Payment Method
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {isEditing && (
+                    <div className="flex justify-end pt-4 border-t border-zinc-800">
+                      <Button 
+                        type="submit"
+                        className="bg-zinc-800 hover:bg-zinc-700 text-white"
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
