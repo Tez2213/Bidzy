@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -23,11 +23,12 @@ const BottomGradient = () => {
   );
 };
 
-export default function BidPaymentPage() {
-  const router = useRouter();
+// Create a component that uses searchParams
+function PaymentContent() {
   const searchParams = useSearchParams();
   const bidId = searchParams.get("bidId");
   
+  const router = useRouter();
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
@@ -277,5 +278,14 @@ export default function BidPaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function BidPaymentPage() {
+  return (
+    <Suspense fallback={<div>Loading payment details...</div>}>
+      <PaymentContent />
+    </Suspense>
   );
 }
