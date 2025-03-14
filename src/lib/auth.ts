@@ -28,17 +28,37 @@ export const authOptions: AuthOptions = {
     async redirect({ url, baseUrl }) {
       // List of allowed redirect URLs
       const allowedUrls = [
-        'http://localhost:3000',
-        'https://bidzy.vercel.app',
-        'https://bidzy-production.up.railway.app'
+        "http://localhost:3000",
+        "https://bidzy.vercel.app",
+        "https://bidzy-production.up.railway.app",
       ];
-      
-      if (allowedUrls.some(allowed => url.startsWith(allowed))) {
+
+      if (allowedUrls.some((allowed) => url.startsWith(allowed))) {
         return url;
       }
       return baseUrl;
-    }
-  }
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+  },
+  session: {
+    strategy: "jwt",
+  },
+  pages: {
+    signIn: "/login",
+    error: "/error",
+  },
+  debug: process.env.NODE_ENV === "development",
 };
 
 export const authConfig = {

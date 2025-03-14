@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { authConfig } from "@/lib/auth"; // Changed from authOptions to authConfig
 import { PrismaClient } from "@prisma/client";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
@@ -10,8 +10,8 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    // Get user session with better error handling
-    const session = await getServerSession(authOptions);
+    // Get user session with the correct auth config
+    const session = await getServerSession(authConfig);
     console.log("API Session:", session); // For debugging
 
     if (!session) {
