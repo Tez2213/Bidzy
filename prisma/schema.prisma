@@ -8,23 +8,25 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
-  name          String?
-  email         String?   @unique
-  image         String?
-  phone         String?
-  address       String?
-  bio           String?
-  dob           DateTime?
-  walletAddress String?
-  paymentMethods Json?      // Stores array of payment methods
-  accountActivity Json?     // Stores activity statistics
-  accounts      Account[]
-  sessions      Session[]
-  password      String?
-  bids          Bid[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  name           String?
+  email          String?   @unique
+  emailVerified  DateTime? // Add this field
+  image          String?
+  phone          String?
+  address        String?
+  bio            String?
+  dob            DateTime?
+  walletAddress  String?
+  paymentMethods Json?     
+  accountActivity Json?    
+  accounts       Account[]
+  sessions       Session[]
+  password       String?
+  bids           Bid[]
+  bidPayments    BidPayment[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
 
 model Account {
@@ -64,13 +66,39 @@ model VerificationToken {
 }
 
 model Bid {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId       String   @db.ObjectId
-  itemId       String   @db.ObjectId
-  amount       Float
-  status       String   @default("ACTIVE") // Can be "ACTIVE", "WON", or other states
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String   @db.ObjectId
+  title                String
+  description          String
+  itemCategory         String
+  originLocation       String
+  destinationLocation  String
+  packageWeight        Float
+  packageDimensions    Json     // Stores length, width, height
+  fragile              Boolean  @default(false)
+  maxBudget            Float
+  requiredDeliveryDate DateTime
+  insurance            Boolean  @default(false)
+  status               String   @default("draft") // "draft", "pending_payment", "published", "active", "completed", "expired"
+  imageUrls            String[]
+  responses            Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  payments             BidPayment[]
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+model BidPayment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  bidId     String   @db.ObjectId
+  userId    String   @db.ObjectId
+  amount    Float
+  status    String   @default("completed") // completed, failed, refunded
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  bid       Bid      @relation(fields: [bidId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+

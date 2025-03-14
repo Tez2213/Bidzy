@@ -1,17 +1,18 @@
 "use client";
 
-import React, { useState, Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import React, { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import {
-  IconCreditCard,
-  IconCheck,
-  IconShield,
+import { 
+  IconCreditCard, 
+  IconCheck, 
+  IconShield, 
   IconLoader2,
   IconArrowRight,
   IconAlertCircle,
-  IconArrowLeft,
+  IconArrowLeft 
 } from "@tabler/icons-react";
 import Link from "next/link";
 
@@ -22,19 +23,26 @@ const BottomGradient = () => {
   );
 };
 
-function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
-  const router = useRouter();
+// Create a component that uses searchParams
+function PaymentContent() {
   const searchParams = useSearchParams();
   const bidId = searchParams.get("bidId");
-
+  
+  const router = useRouter();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push("/login");
+    },
+  });
+  
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bidDetails, setBidDetails] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoadingBid, setIsLoadingBid] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<string>("card");
 
-  const platformFee = 5.99; // Example platform fee in USD
+  const platformFee = 2.99; // Example platform fee in USD for bidding
 
   // Fetch bid details
   useEffect(() => {
@@ -47,11 +55,11 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
 
       try {
         const response = await fetch(`/api/bids/${bidId}`);
-
+        
         if (!response.ok) {
           throw new Error("Failed to fetch bid details");
         }
-
+        
         const data = await response.json();
         setBidDetails(data.bid);
       } catch (error) {
@@ -61,40 +69,41 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
         setIsLoadingBid(false);
       }
     }
-
-    fetchBidDetails();
-  }, [bidId]);
-
-  // Handle quick payment (demo)
-  const handleQuickPay = async () => {
+    
+    if (status === "authenticated") {
+      fetchBidDetails();
+    }
+  }, [bidId, status]);
+  
+  // Handle payment
+  const handlePayment = async () => {
     if (!bidId) {
       toast.error("Bid ID is missing");
       return;
     }
-
+    
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      // Process payment and update bid status
-      const response = await fetch(`/api/bids/${bidId}/payment`, {
-        method: "POST",
+      // Process payment and enable bidding
+      const response = await fetch(`/api/bids/${bidId}/bid-payment`, {
+        method: 'POST',
       });
-
+      
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Payment failed");
+        throw new Error(errorData.message || 'Payment failed');
       }
-
+      
       setShowSuccess(true);
-      toast.success(
-        "Payment successful! Your shipping request has been published."
-      );
-
+      toast.success("Payment successful! You can now place your bid.");
+      
       // Redirect after success message
       setTimeout(() => {
-        router.push("/your-bid");
+        router.push(`/submit-proposal/${bidId}`);
       }, 2000);
+      
     } catch (err: any) {
       setError(err.message || "Payment processing failed");
       toast.error(err.message || "An error occurred");
@@ -103,7 +112,6 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
     }
   };
 
-  // Loading state while fetching bid
   if (isLoadingBid) {
     return (
       <div className="min-h-screen w-full bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center">
@@ -123,9 +131,9 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
           <IconAlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Error</h1>
           <p className="text-zinc-400 mb-6">{error}</p>
-          <Link href="/your-bid">
+          <Link href="/findbid">
             <Button className="bg-zinc-800 hover:bg-zinc-700 text-white">
-              Back to Bids
+              Back to Find Bids
             </Button>
           </Link>
         </div>
@@ -141,33 +149,24 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
           <div className="w-20 h-20 mx-auto bg-green-900/20 rounded-full flex items-center justify-center mb-6">
             <IconCheck className="w-10 h-10 text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Payment Successful
-          </h1>
+          <h1 className="text-2xl font-bold text-white mb-2">Payment Successful</h1>
           <p className="text-zinc-400 mb-6">
-            Your shipping request has been published and is now visible to
-            carriers.
+            You can now submit your proposal for this shipping request.
           </p>
           <div className="w-full bg-zinc-800 rounded-lg p-4 mb-6">
             <div className="flex justify-between mb-2">
-              <span className="text-zinc-400">Platform Fee:</span>
-              <span className="text-white font-medium">
-                ${platformFee.toFixed(2)}
-              </span>
+              <span className="text-zinc-400">Bidding Fee:</span>
+              <span className="text-white font-medium">${platformFee.toFixed(2)}</span>
             </div>
             <div className="border-t border-zinc-700 pt-2 flex justify-between">
               <span className="text-zinc-400">Total Paid:</span>
-              <span className="text-white font-medium">
-                ${platformFee.toFixed(2)}
-              </span>
+              <span className="text-white font-medium">${platformFee.toFixed(2)}</span>
             </div>
           </div>
-          <Link href="/your-bid">
-            <Button className="bg-zinc-800 hover:bg-zinc-700 text-white w-full">
-              View Your Bids
-              <IconArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+          <p className="text-zinc-500 text-sm mb-4">Redirecting you to submit your proposal...</p>
+          <div className="flex justify-center">
+            <div className="w-6 h-6 border-t-2 border-zinc-500 rounded-full animate-spin"></div>
+          </div>
         </div>
       </div>
     );
@@ -182,48 +181,44 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
           <Link href="/" className="text-white text-xl font-bold">
             Bidzy
           </Link>
-          <Link
-            href="/your-bid"
+          <Link 
+            href="/findbid" 
             className="text-white hover:text-gray-300 transition-colors text-sm flex items-center gap-1"
           >
             <IconArrowLeft className="w-4 h-4" />
-            Cancel and return
+            Back to bids
           </Link>
         </div>
-
+        
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl relative">
           <BottomGradient />
 
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-1">Platform Fee</h1>
-            <p className="text-zinc-400">
-              Complete payment to publish your shipping request
-            </p>
+            <h1 className="text-2xl font-bold text-white mb-1">Bidding Fee</h1>
+            <p className="text-zinc-400">Pay to submit your proposal for this shipping request</p>
           </div>
 
           {/* Order Summary */}
           <div className="bg-zinc-800/50 rounded-lg p-4 mb-6">
-            <h2 className="font-medium text-white mb-2">Order Summary</h2>
+            <h2 className="font-medium text-white mb-2">Bid Summary</h2>
             {bidDetails && (
               <div className="text-sm">
                 <div className="flex justify-between mb-1">
                   <span className="text-zinc-400">Request ID:</span>
-                  <span className="text-zinc-300">
-                    {bidDetails.id.slice(0, 8)}...
-                  </span>
+                  <span className="text-zinc-300">{bidDetails.id.slice(0, 8)}...</span>
                 </div>
                 <div className="flex justify-between mb-1">
                   <span className="text-zinc-400">Title:</span>
-                  <span className="text-zinc-300 truncate max-w-[200px]">
-                    {bidDetails.title}
-                  </span>
+                  <span className="text-zinc-300 truncate max-w-[200px]">{bidDetails.title}</span>
+                </div>
+                <div className="flex justify-between mb-1">
+                  <span className="text-zinc-400">Max Budget:</span>
+                  <span className="text-zinc-300">${bidDetails.maxBudget.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-zinc-700 mt-2 pt-2">
                   <div className="flex justify-between font-medium">
-                    <span className="text-zinc-300">Platform Fee:</span>
-                    <span className="text-white">
-                      ${platformFee.toFixed(2)}
-                    </span>
+                    <span className="text-zinc-300">Bidding Fee:</span>
+                    <span className="text-white">${platformFee.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -240,7 +235,7 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
               </div>
             </div>
 
-            {/* Demo Action (Skipping actual payment for now) */}
+            {/* Demo Action */}
             <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-4">
               <div className="flex items-center mb-4">
                 <IconCreditCard className="w-5 h-5 text-zinc-400 mr-2" />
@@ -248,9 +243,9 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
                   This is a demo mode. No actual payment will be processed.
                 </p>
               </div>
-
+              
               <Button
-                onClick={handleQuickPay}
+                onClick={handlePayment}
                 disabled={isLoading}
                 className="w-full bg-zinc-700 hover:bg-zinc-600 text-white"
               >
@@ -260,7 +255,9 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
                     Processing...
                   </>
                 ) : (
-                  <>Pay ${platformFee.toFixed(2)} & Publish Request</>
+                  <>
+                    Pay ${platformFee.toFixed(2)} & Submit Proposal
+                  </>
                 )}
               </Button>
             </div>
@@ -276,10 +273,7 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
           )}
 
           <div className="text-center text-xs text-zinc-500">
-            <p>
-              By proceeding, you agree to our Terms of Service and Privacy
-              Policy
-            </p>
+            <p>By proceeding, you agree to our Terms of Service and Privacy Policy</p>
           </div>
         </div>
       </div>
@@ -287,16 +281,10 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
   );
 }
 
-// Main page component with suspense boundary
-export default function PaymentPage() {
+// Main component with Suspense boundary
+export default function BidPaymentPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-zinc-900">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
-        </div>
-      }
-    >
+    <Suspense fallback={<div>Loading payment details...</div>}>
       <PaymentContent />
     </Suspense>
   );
