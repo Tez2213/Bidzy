@@ -88,6 +88,10 @@ export function CreateBidForm() {
     fragile: false,
     maxBudget: "100",
     requiredDeliveryDate: "",
+    liveBiddingStart: {
+      date: "",
+      time: "",
+    },
     insurance: false,
     saveAsDraft: false,
     images: [] as File[],
@@ -101,53 +105,63 @@ export function CreateBidForm() {
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!session?.user) {
       toast.error("Please sign in to create a bid");
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Upload images first
       const imageUrls: string[] = [];
-      
+
       if (formData.images.length > 0) {
         setUploadProgress(10);
-        
+
         // For each image, upload to your storage
         for (let i = 0; i < formData.images.length; i++) {
           const file = formData.images[i];
-          
+
           // Create form data for upload
           const uploadData = new FormData();
-          uploadData.append('file', file);
-          
+          uploadData.append("file", file);
+
           // Upload the image
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
+          const uploadResponse = await fetch("/api/upload", {
+            method: "POST",
             body: uploadData,
           });
-          
+
           if (!uploadResponse.ok) {
-            throw new Error('Failed to upload image');
+            throw new Error("Failed to upload image");
           }
-          
+
           const uploadResult = await uploadResponse.json();
           imageUrls.push(uploadResult.url);
-          
+
           // Update progress
-          setUploadProgress(Math.round(((i + 1) / formData.images.length) * 50));
+          setUploadProgress(
+            Math.round(((i + 1) / formData.images.length) * 50)
+          );
         }
       }
-      
+
+      // Create liveBiddingStart datetime if both date and time are provided
+      let liveBiddingStart = null;
+      if (formData.liveBiddingStart.date && formData.liveBiddingStart.time) {
+        const dateStr = formData.liveBiddingStart.date;
+        const timeStr = formData.liveBiddingStart.time;
+        liveBiddingStart = new Date(`${dateStr}T${timeStr}`);
+      }
+
       // Create the bid with uploaded image URLs
-      const response = await fetch('/api/bids/create', {
-        method: 'POST',
+      const response = await fetch("/api/bids/create", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title: formData.title,
@@ -164,26 +178,27 @@ export function CreateBidForm() {
           fragile: formData.fragile,
           maxBudget: parseFloat(formData.maxBudget),
           requiredDeliveryDate: formData.requiredDeliveryDate,
+          liveBiddingStart: liveBiddingStart,
           insurance: formData.insurance,
           imageUrls: imageUrls,
-          status: formData.saveAsDraft ? 'draft' : 'pending_payment',
+          status: formData.saveAsDraft ? "draft" : "pending_payment",
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create bid');
+        throw new Error(errorData.message || "Failed to create bid");
       }
-      
+
       const data = await response.json();
-      
+
       // Handle redirect based on draft status
       if (formData.saveAsDraft) {
         setShowSuccess(true);
         toast.success("Draft saved successfully!");
-        
+
         setTimeout(() => {
-          router.push('/your-bid');
+          router.push("/your-bid");
         }, 1500);
       } else {
         router.push(`/payment?bidId=${data.bid.id}`);
@@ -622,6 +637,65 @@ export function CreateBidForm() {
                 </Label>
               </div>
             </LabelInputContainer>
+          </div>
+        </div>
+
+        {/* Live Bidding Schedule */}
+        <div>
+          <SectionHeader
+            icon={<IconClock className="h-5 w-5" />}
+            title="Live Bidding Schedule"
+            description="Set when you want the live bidding to start (optional)"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <LabelInputContainer>
+              <Label htmlFor="liveBiddingStart.date" className="text-zinc-300">
+                Live Bidding Date
+              </Label>
+              <Input
+                id="liveBiddingStart.date"
+                name="liveBiddingStart.date"
+                type="date"
+                value={formData.liveBiddingStart.date}
+                onChange={handleInputChange}
+                min={new Date().toISOString().split("T")[0]}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </LabelInputContainer>
+
+            <LabelInputContainer>
+              <Label htmlFor="liveBiddingStart.time" className="text-zinc-300">
+                Live Bidding Time
+              </Label>
+              <Input
+                id="liveBiddingStart.time"
+                name="liveBiddingStart.time"
+                type="time"
+                value={formData.liveBiddingStart.time}
+                onChange={handleInputChange}
+                className="bg-zinc-800 border-zinc-700 text-white"
+              />
+            </LabelInputContainer>
+          </div>
+
+          <div className="mt-4 bg-zinc-800/50 rounded-lg p-4 border border-zinc-700/50">
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 rounded-full bg-zinc-700">
+                <IconAlertCircle className="h-4 w-4 text-zinc-300" />
+              </div>
+              <div className="text-sm text-zinc-400">
+                <p>
+                  Live bidding allows carriers to compete in real-time for your
+                  shipment. The live bidding option will become active 15
+                  minutes before your scheduled time.
+                </p>
+                <p className="mt-1">
+                  If you don't set a time, your request will receive standard
+                  bids only.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
