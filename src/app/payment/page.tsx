@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ const BottomGradient = () => {
   );
 };
 
-export default function PaymentPage() {
+function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bidId = searchParams.get("bidId");
@@ -32,6 +32,7 @@ export default function PaymentPage() {
   const [bidDetails, setBidDetails] = useState<any>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isLoadingBid, setIsLoadingBid] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<string>("card");
 
   const platformFee = 5.99; // Example platform fee in USD
 
@@ -283,5 +284,20 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component with suspense boundary
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-zinc-900">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }
