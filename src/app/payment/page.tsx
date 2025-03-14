@@ -14,6 +14,12 @@ import {
   IconArrowLeft,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { ethers, parseEther } from 'ethers';
+import { IconWallet } from '@tabler/icons-react';
+
+// Add these constants at the top of the file
+const ADMIN_WALLET = "0x4494101f2B4806a8969cb5C0Ff9787cB13aC5ab4"; // Replace with your admin wallet
+const ETH_TO_USD = 0.00037; // This should be fetched from an API in production
 
 // Bottom gradient effect
 const BottomGradient = () => {
@@ -25,7 +31,7 @@ const BottomGradient = () => {
 function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bidId = searchParams.get("bidId");
+  const bidId = searchParams ? searchParams.get("bidId") : null;
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +104,78 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
     } catch (err: any) {
       setError(err.message || "Payment processing failed");
       toast.error(err.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Add this function inside PaymentContent component
+  const handleCryptoPayment = async () => {
+    if (!window.ethereum) {
+      toast.error("Please install MetaMask to make payments");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Convert USD platform fee to ETH
+      const ethAmount = (platformFee * ETH_TO_USD).toFixed(8);
+      const weiAmount = ethers.parseEther(ethAmount);
+
+      // Request account access
+      const accounts = await window.ethereum.request({ 
+        method: 'eth_requestAccounts' 
+      });
+
+      // Create transaction parameters
+      const transactionParameters = {
+        to: ADMIN_WALLET,
+        from: accounts[0],
+        value: ethers.toQuantity(weiAmount), // Fixed: using toQuantity for proper hex conversion
+        gas: ethers.toQuantity(21000), // Convert gas limit to hex
+      };
+
+      // Send transaction
+      const txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [transactionParameters],
+      });
+
+      // Wait for transaction confirmation
+      setIsLoading(true);
+      toast.loading("Waiting for transaction confirmation...");
+
+      // Update bid payment status
+      const response = await fetch(`/api/bids/${bidId}/payment`, {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionHash: txHash,
+          amount: platformFee,
+          currency: 'ETH'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update payment status");
+      }
+
+      setShowSuccess(true);
+      toast.success("Payment successful!");
+
+      // Redirect after success
+      setTimeout(() => {
+        router.push("/your-bid");
+      }, 2000);
+
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      setError(error.message || "Payment failed");
+      toast.error("Payment failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -243,24 +321,27 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
             {/* Demo Action (Skipping actual payment for now) */}
             <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-4">
               <div className="flex items-center mb-4">
-                <IconCreditCard className="w-5 h-5 text-zinc-400 mr-2" />
+                <IconWallet className="w-5 h-5 text-zinc-400 mr-2" />
                 <p className="text-zinc-300 text-sm">
-                  This is a demo mode. No actual payment will be processed.
+                  Pay with ETH via MetaMask
                 </p>
               </div>
 
               <Button
-                onClick={handleQuickPay}
+                onClick={handleCryptoPayment}
                 disabled={isLoading}
                 className="w-full bg-zinc-700 hover:bg-zinc-600 text-white"
               >
                 {isLoading ? (
                   <>
                     <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
+                    Processing Transaction...
                   </>
                 ) : (
-                  <>Pay ${platformFee.toFixed(2)} & Publish Request</>
+                  <>
+                    Pay {(platformFee * ETH_TO_USD).toFixed(8)} ETH
+                    <IconWallet className="ml-2 h-4 w-4" />
+                  </>
                 )}
               </Button>
             </div>
