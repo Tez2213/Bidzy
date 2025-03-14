@@ -106,8 +106,12 @@ export function CreateBidForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Debug authentication
+    console.log("Session data:", session);
+
     if (!session?.user) {
       toast.error("Please sign in to create a bid");
+      router.push("/auth/signin"); // Redirect to sign in page
       return;
     }
 
@@ -291,24 +295,24 @@ export function CreateBidForm() {
 
     if (type === "checkbox") {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData({ ...formData, [name]: checked });
+      setFormData((prev) => ({ ...prev, [name]: checked }));
       return;
     }
 
-    // Handle nested properties (packageDimensions)
+    // Handle nested properties (packageDimensions and liveBiddingStart)
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         [parent]: {
-          ...formData[parent as keyof typeof formData],
+          ...prev[parent as keyof typeof prev],
           [child]: value,
         },
-      });
+      }));
       return;
     }
 
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Success state UI
@@ -757,60 +761,6 @@ export function CreateBidForm() {
                       className="absolute top-1 right-1 bg-black/70 text-white p-1 rounded-full hover:bg-black/90 transition-colors"
                     >
                       <IconAlertCircle className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Add this inside your form, where you want the image upload section to appear */}
-        <div className="mb-6">
-          <label className="block text-white text-sm font-medium mb-2 flex items-center">
-            <IconPhoto className="mr-2" />
-            Package Photos (Optional)
-          </label>
-
-          <div className="mt-1 flex flex-col space-y-2">
-            {/* Hidden file input */}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/jpg"
-              onChange={handleFileChange}
-              ref={fileInputRef}
-              className="hidden"
-              multiple
-            />
-
-            {/* Custom upload button */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-md flex items-center justify-center transition-colors"
-            >
-              <IconPhoto className="mr-2" size={18} />
-              Add Photos
-            </button>
-
-            {/* Selected images preview */}
-            {formData.images.length > 0 && (
-              <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-                {formData.images.map((file, index) => (
-                  <div key={index} className="relative">
-                    <div className="aspect-square rounded-lg overflow-hidden bg-zinc-800">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Selected image ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full"
-                    >
-                      <IconX size={16} />
                     </button>
                   </div>
                 ))}
