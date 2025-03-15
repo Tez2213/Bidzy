@@ -93,19 +93,6 @@ model Bid {
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model BidPayment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  bidId     String   @db.ObjectId
-  userId    String   @db.ObjectId
-  amount    Float
-  status    String   @default("completed") // completed, failed, refunded
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  bid       Bid      @relation(fields: [bidId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-}
-
 model Payment {
   id             String   @id @default(auto()) @map("_id") @db.ObjectId
   amount         Float
