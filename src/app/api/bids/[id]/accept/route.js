@@ -66,12 +66,11 @@ export async function POST(request, { params }) {
       
       console.log("Created payment record:", payment.id);
 
-      // Then update the bid with carrierId and paymentId
-      // Both fields exist in your schema
+      // Check if the status is correctly being set to "active"
       const updatedBid = await prisma.bid.update({
         where: { id },
         data: {
-          status: "active", // Changed from in_progress to active to match your schema's status options
+          status: "active", // This should be exactly "active"
           carrierId: session.user.id,
           paymentId: payment.id
         }

@@ -1,384 +1,258 @@
 "use client";
 
-import React, { useState, Suspense, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import {
-  IconCreditCard,
-  IconCheck,
-  IconShield,
-  IconLoader2,
-  IconArrowRight,
-  IconAlertCircle,
-  IconArrowLeft,
-} from "@tabler/icons-react";
 import Link from "next/link";
-import { ethers, parseEther } from 'ethers';
-import { IconWallet } from '@tabler/icons-react';
+import { Button } from "@/components/ui/button";
+import { IconAlertCircle, IconLoader2, IconArrowLeft } from "@tabler/icons-react";
+import { ethers } from "ethers";
 
-// Add these constants at the top of the file
-const ADMIN_WALLET = "0x4494101f2B4806a8969cb5C0Ff9787cB13aC5ab4"; // Replace with your admin wallet
-const ETH_TO_USD = 0.00037; // This should be fetched from an API in production
+// Constants for demonstration purposes
+const PLATFORM_FEE = 0.005; // ETH 
+const ADMIN_WALLET = "0xC235F937f4d2aD8D351cb6EA450598a7445ac6E2"; // Replace with your actual wallet
 
-// Bottom gradient effect
-const BottomGradient = () => {
-  return (
-    <div className="absolute inset-x-0 -bottom-px h-px bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-30" />
-  );
-};
-
-function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
+export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const bidId = searchParams ? searchParams.get("bidId") : null;
+  const bidId = searchParams.get("bidId");
+  
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [bid, setBid] = useState(null);
+  const [error, setError] = useState(null);
+  const [transactionHash, setTransactionHash] = useState(null);
+  const [success, setSuccess] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [bidDetails, setBidDetails] = useState<any>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isLoadingBid, setIsLoadingBid] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<string>("card");
-
-  const platformFee = 100; // Example platform fee in USD
-
-  // Fetch bid details
   useEffect(() => {
-    async function fetchBidDetails() {
-      if (!bidId) {
-        setError("No bid ID provided");
-        setIsLoadingBid(false);
-        return;
-      }
-
-      try {
-        const response = await fetch(`/api/bids/${bidId}`);
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch bid details");
-        }
-
-        const data = await response.json();
-        setBidDetails(data.bid);
-      } catch (error) {
-        console.error("Error fetching bid:", error);
-        setError("Failed to load bid details");
-      } finally {
-        setIsLoadingBid(false);
-      }
+    if (!bidId) {
+      setError("No bid ID provided");
+      setLoading(false);
+      return;
     }
-
+    
     fetchBidDetails();
   }, [bidId]);
 
-  // Handle quick payment (demo)
-  const handleQuickPay = async () => {
-    if (!bidId) {
-      toast.error("Bid ID is missing");
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
+  async function fetchBidDetails() {
+    setLoading(true);
     try {
-      // Process payment and update bid status
-      const response = await fetch(`/api/bids/${bidId}/payment`, {
-        method: "POST",
-      });
-
+      const response = await fetch(`/api/bids/${bidId}`);
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Payment failed");
+        throw new Error("Failed to fetch bid details");
       }
-
-      setShowSuccess(true);
-      toast.success(
-        "Payment successful! Your shipping request has been published."
-      );
-
-      // Redirect after success message
-      setTimeout(() => {
-        router.push("/your-bid");
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Payment processing failed");
-      toast.error(err.message || "An error occurred");
+      
+      const data = await response.json();
+      setBid(data.bid);
+    } catch (error) {
+      console.error("Error fetching bid:", error);
+      setError("Failed to load bid details");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }
 
-  // Add this function inside PaymentContent component
-  const handleCryptoPayment = async () => {
+  async function handlePayment() {
     if (!window.ethereum) {
-      toast.error("Please install MetaMask to make payments");
+      setError("Please install MetaMask to make payments");
       return;
     }
 
-    setIsLoading(true);
     setError(null);
+    setProcessing(true);
 
     try {
-      // Convert USD platform fee to ETH
-      const ethAmount = (platformFee * ETH_TO_USD).toFixed(8);
-      const weiAmount = ethers.parseEther(ethAmount);
-
       // Request account access
       const accounts = await window.ethereum.request({ 
         method: 'eth_requestAccounts' 
       });
 
+      const weiAmount = ethers.parseEther(PLATFORM_FEE.toString());
+      
       // Create transaction parameters
       const transactionParameters = {
         to: ADMIN_WALLET,
         from: accounts[0],
-        value: ethers.toQuantity(weiAmount), // Fixed: using toQuantity for proper hex conversion
-        gas: ethers.toQuantity(21000), // Convert gas limit to hex
+        value: weiAmount.toString(),  // Convert to hex string
       };
-
+      
       // Send transaction
       const txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [transactionParameters],
       });
 
-      // Wait for transaction confirmation
-      setIsLoading(true);
-      toast.loading("Waiting for transaction confirmation...");
-
-      // Update bid payment status
-      const response = await fetch(`/api/bids/${bidId}/payment`, {
+      setTransactionHash(txHash);
+      
+      // Update bid status to reflect payment
+      const response = await fetch(`/api/bids/${bidId}/publish`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           transactionHash: txHash,
-          amount: platformFee,
-          currency: 'ETH'
         })
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update payment status");
+        throw new Error("Failed to update bid status");
       }
 
-      setShowSuccess(true);
-      toast.success("Payment successful!");
-
-      // Redirect after success
+      setSuccess(true);
+      
+      // Redirect after successful payment
       setTimeout(() => {
-        router.push("/your-bid");
-      }, 2000);
-
-    } catch (error: any) {
+        router.push('/your-bid');
+      }, 3000);
+      
+    } catch (error) {
       console.error("Payment error:", error);
       setError(error.message || "Payment failed");
-      toast.error("Payment failed. Please try again.");
     } finally {
-      setIsLoading(false);
+      setProcessing(false);
     }
-  };
-
-  // Loading state while fetching bid
-  if (isLoadingBid) {
-    return (
-      <div className="min-h-screen w-full bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <IconLoader2 className="w-12 h-12 text-zinc-400 animate-spin" />
-          <p className="text-zinc-400 text-lg">Loading payment details...</p>
-        </div>
-      </div>
-    );
   }
 
-  // Error state
-  if (error && !bidDetails) {
+  if (error) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center">
-        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
-          <IconAlertCircle className="w-16 h-16 mx-auto text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Error</h1>
-          <p className="text-zinc-400 mb-6">{error}</p>
-          <Link href="/your-bid">
-            <Button className="bg-zinc-800 hover:bg-zinc-700 text-white">
+      <div className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900 py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Link href="/your-bid" className="text-blue-400 hover:text-blue-300 flex items-center">
+              <IconArrowLeft className="mr-2 h-4 w-4" />
+              Back to Bids
+            </Link>
+          </div>
+
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
+            <IconAlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-medium text-red-300 mb-2">Error</h2>
+            <p className="text-zinc-300 mb-6">{error}</p>
+            <Button 
+              onClick={() => router.push('/your-bid')}
+              className="bg-zinc-800 hover:bg-zinc-700"
+            >
               Back to Bids
             </Button>
-          </Link>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Success state
-  if (showSuccess) {
+  if (loading) {
     return (
-      <div className="min-h-screen w-full bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
-          <div className="w-20 h-20 mx-auto bg-green-900/20 rounded-full flex items-center justify-center mb-6">
-            <IconCheck className="w-10 h-10 text-green-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            Payment Successful
-          </h1>
-          <p className="text-zinc-400 mb-6">
-            Your shipping request has been published and is now visible to
-            carriers.
-          </p>
-          <div className="w-full bg-zinc-800 rounded-lg p-4 mb-6">
-            <div className="flex justify-between mb-2">
-              <span className="text-zinc-400">Platform Fee:</span>
-              <span className="text-white font-medium">
-                ${platformFee.toFixed(2)}
-              </span>
-            </div>
-            <div className="border-t border-zinc-700 pt-2 flex justify-between">
-              <span className="text-zinc-400">Total Paid:</span>
-              <span className="text-white font-medium">
-                ${platformFee.toFixed(2)}
-              </span>
-            </div>
-          </div>
-          <Link href="/your-bid">
-            <Button className="bg-zinc-800 hover:bg-zinc-700 text-white w-full">
-              View Your Bids
-              <IconArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
+      <div className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900 py-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <IconLoader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <p className="text-zinc-300 text-lg">Loading bid details...</p>
         </div>
       </div>
     );
   }
 
-  // Main payment UI
+  if (success) {
+    return (
+      <div className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900 py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-8 text-center">
+            <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-medium text-green-300 mb-2">Payment Successful!</h2>
+            <p className="text-zinc-300 mb-2">Your payment has been processed and your bid is now published.</p>
+            <p className="text-zinc-400 text-sm mb-6">Transaction ID: {transactionHash?.substring(0, 10)}...</p>
+            <p className="text-zinc-400 mb-8">Redirecting you to your bids...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-black to-zinc-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-white text-xl font-bold">
-            Bidzy
-          </Link>
-          <Link
-            href="/your-bid"
-            className="text-white hover:text-gray-300 transition-colors text-sm flex items-center gap-1"
-          >
-            <IconArrowLeft className="w-4 h-4" />
-            Cancel and return
+    <div className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-8">
+          <Link href="/your-bid" className="text-blue-400 hover:text-blue-300 flex items-center">
+            <IconArrowLeft className="mr-2 h-4 w-4" />
+            Back to Bids
           </Link>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-xl relative">
-          <BottomGradient />
-
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-white mb-1">Platform Fee</h1>
-            <p className="text-zinc-400">
-              Complete payment to publish your shipping request
-            </p>
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
+          <div className="p-6 border-b border-zinc-800">
+            <h2 className="text-2xl font-semibold text-white mb-2">Complete Payment</h2>
+            <p className="text-zinc-400">Pay the platform fee to publish your shipping request</p>
           </div>
 
-          {/* Order Summary */}
-          <div className="bg-zinc-800/50 rounded-lg p-4 mb-6">
-            <h2 className="font-medium text-white mb-2">Order Summary</h2>
-            {bidDetails && (
-              <div className="text-sm">
-                <div className="flex justify-between mb-1">
-                  <span className="text-zinc-400">Request ID:</span>
-                  <span className="text-zinc-300">
-                    {bidDetails.id.slice(0, 8)}...
-                  </span>
-                </div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-zinc-400">Title:</span>
-                  <span className="text-zinc-300 truncate max-w-[200px]">
-                    {bidDetails.title}
-                  </span>
-                </div>
-                <div className="border-t border-zinc-700 mt-2 pt-2">
-                  <div className="flex justify-between font-medium">
-                    <span className="text-zinc-300">Platform Fee:</span>
-                    <span className="text-white">
-                      ${platformFee.toFixed(2)}
-                    </span>
+          <div className="p-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-zinc-200 mb-4">Bid Details</h3>
+              
+              {bid && (
+                <div className="space-y-4 bg-zinc-800/30 p-4 rounded-md">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Title</span>
+                    <span className="text-zinc-200 font-medium">{bid.title}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Origin</span>
+                    <span className="text-zinc-200">{bid.pickup || bid.originLocation}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Destination</span>
+                    <span className="text-zinc-200">{bid.destination || bid.destinationLocation}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Budget</span>
+                    <span className="text-zinc-200 font-medium">${bid.budget || bid.maxBudget}</span>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Demo Payment Info */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-medium text-white">Payment Method</h2>
-              <div className="flex items-center">
-                <IconShield className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-xs text-green-500">Secure payment</span>
+            <div className="mb-8">
+              <h3 className="text-lg font-medium text-zinc-200 mb-4">Payment Details</h3>
+              <div className="space-y-4 bg-zinc-800/30 p-4 rounded-md">
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Platform Fee</span>
+                  <span className="text-zinc-200 font-medium">{PLATFORM_FEE} ETH</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-400">Payment Method</span>
+                  <span className="text-zinc-200">MetaMask (ETH)</span>
+                </div>
               </div>
             </div>
 
-            {/* Demo Action (Skipping actual payment for now) */}
-            <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-4">
-              <div className="flex items-center mb-4">
-                <IconWallet className="w-5 h-5 text-zinc-400 mr-2" />
-                <p className="text-zinc-300 text-sm">
-                  Pay with ETH via MetaMask
-                </p>
-              </div>
+            <div className="bg-blue-500/10 border border-blue-600/30 rounded p-4 mb-8">
+              <p className="text-blue-300 text-sm">
+                This payment will publish your shipping request, making it visible to carriers on the platform.
+              </p>
+            </div>
 
+            <div className="flex justify-end">
               <Button
-                onClick={handleCryptoPayment}
-                disabled={isLoading}
-                className="w-full bg-zinc-700 hover:bg-zinc-600 text-white"
+                onClick={handlePayment}
+                disabled={processing}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8"
               >
-                {isLoading ? (
+                {processing ? (
                   <>
                     <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing Transaction...
+                    Processing...
                   </>
                 ) : (
-                  <>
-                    Pay {(platformFee * ETH_TO_USD).toFixed(8)} ETH
-                    <IconWallet className="ml-2 h-4 w-4" />
-                  </>
+                  'Pay Now'
                 )}
               </Button>
             </div>
           </div>
-
-          {error && (
-            <div className="bg-red-900/20 border border-red-900/50 rounded-lg p-4 mb-6">
-              <p className="text-red-500 text-sm flex items-center">
-                <IconAlertCircle className="h-4 w-4 mr-2" />
-                {error}
-              </p>
-            </div>
-          )}
-
-          <div className="text-center text-xs text-zinc-500">
-            <p>
-              By proceeding, you agree to our Terms of Service and Privacy
-              Policy
-            </p>
-          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-// Main page component with suspense boundary
-export default function PaymentPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-zinc-900">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500"></div>
-        </div>
-      }
-    >
-      <PaymentContent />
-    </Suspense>
   );
 }

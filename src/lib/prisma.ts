@@ -1,18 +1,20 @@
 import { PrismaClient } from '@prisma/client'
 
-// Add verbose logging in development
-const prismaClientSingleton = () => {
+// This is a workaround for Next.js hot reloading
+// See: https://www.prisma.io/docs/orm/more/help-and-troubleshooting/help-articles/nextjs-prisma-client-dev-practices
+
+// Prevent multiple instances of Prisma Client in development
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
+
+// Create a new Prisma Client instance
+const createPrismaClient = () => {
   return new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
+    log: ['query', 'error', 'warn'],
   })
 }
 
-// Prevent multiple instances during hot reload
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
+// Export the Prisma Client instance
+export const prisma = globalForPrisma.prisma || createPrismaClient()
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 

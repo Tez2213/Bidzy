@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { PrismaClient } from "@prisma/client";
+import { getServerSession } from "next-auth/next";
+import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 
-const prisma = new PrismaClient();
-
+// Use this exact format
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const bidId = params.id;
+  // Move this outside of try/catch - this is how find-bid page handles it
+  const id = params?.id;
+  
+  if (!id) {
+    return NextResponse.json({ message: "Bid ID is required" }, { status: 400 });
+  }
 
+  try {
     // Check authentication
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    // Get the bid with participant count
+    // Fetch the bid with related data
     const bid = await prisma.bid.findUnique({
-      where: { id: bidId },
+      where: { id },
       include: {
         user: {
           select: {
@@ -29,15 +29,7 @@ export async function GET(
             name: true,
             image: true,
           },
-        },
-        payments: {
-          where: {
-            status: "completed",
-          },
-          select: {
-            id: true,
-          },
-        },
+        }
       },
     });
 
@@ -45,34 +37,19 @@ export async function GET(
       return NextResponse.json({ message: "Bid not found" }, { status: 404 });
     }
 
-    // Anyone can view published bids, but only owners can view their own drafts
-    const isOwner = bid.userId === session.user.id;
-    if (!isOwner && bid.status !== "published") {
+    // Check if the user is the owner of the bid or it's a public bid
+    const isOwner = session?.user?.id === bid.userId;
+    const isPublic = bid.status === "published" || bid.status === "active";
+
+    if (!isOwner && !isPublic) {
       return NextResponse.json(
         { message: "You don't have permission to view this bid" },
         { status: 403 }
       );
     }
 
-    // Check if the current user is participating
-    const isParticipating = await prisma.bidPayment.findFirst({
-      where: {
-        bidId: bidId,
-        userId: session.user.id,
-        status: "completed",
-      },
-    });
-
-    // Format the response
-    const bidWithCounts = {
-      ...bid,
-      participantCount: bid.payments.length,
-      isParticipating: !!isParticipating,
-      payments: undefined, // Remove payment details from response
-    };
-
-    // Return the bid
-    return NextResponse.json({ bid: bidWithCounts });
+    return NextResponse.json({ bid });
+    
   } catch (error) {
     console.error("Error fetching bid:", error);
     return NextResponse.json(
