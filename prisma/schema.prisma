@@ -24,7 +24,7 @@ model User {
   sessions       Session[]
   password       String?
   bids           Bid[]
-  bidPayments    BidPayment[]
+  payments       Payment[]  // Add this line to create the relation with Payment
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
@@ -85,21 +85,22 @@ model Bid {
   responses            Int      @default(0)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
-  payments             BidPayment[]
+  carrierId            String?  @db.ObjectId
+  paymentId            String?  @db.ObjectId
 
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model BidPayment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  bidId     String   @db.ObjectId
-  userId    String   @db.ObjectId
-  amount    Float
-  status    String   @default("completed") // completed, failed, refunded
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  bid       Bid      @relation(fields: [bidId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+model Payment {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  amount         Float
+  currency       String
+  transactionHash String?
+  type           String
+  status         String
+  userId         String   @db.ObjectId
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id])
 }
 
