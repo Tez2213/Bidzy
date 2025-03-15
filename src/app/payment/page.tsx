@@ -1,17 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { IconAlertCircle, IconLoader2, IconArrowLeft } from "@tabler/icons-react";
 import { ethers } from "ethers";
 
-// Constants for demonstration purposes
-const PLATFORM_FEE = 0.005; // ETH 
-const ADMIN_WALLET = "0xC235F937f4d2aD8D351cb6EA450598a7445ac6E2"; // Replace with your actual wallet
+// Loading fallback component
+function PaymentLoading() {
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-b from-black to-gray-900 py-20 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+      <div className="flex flex-col items-center space-y-4">
+        <IconLoader2 className="h-12 w-12 animate-spin text-blue-500" />
+        <p className="text-zinc-300 text-lg">Loading payment page...</p>
+      </div>
+    </div>
+  );
+}
 
-export default function PaymentPage() {
+// Constants for demonstration purposes
+const PLATFORM_FEE = 0.000005; // ETH 
+const ADMIN_WALLET = "0x4494101f2B4806a8969cb5C0Ff9787cB13aC5ab4";
+
+// Main payment content component that uses useSearchParams
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const bidId = searchParams.get("bidId");
@@ -60,6 +73,7 @@ export default function PaymentPage() {
 
     setError(null);
     setProcessing(true);
+    let txHash = null;
 
     try {
       // Request account access
@@ -73,42 +87,61 @@ export default function PaymentPage() {
       const transactionParameters = {
         to: ADMIN_WALLET,
         from: accounts[0],
-        value: weiAmount.toString(),  // Convert to hex string
+        value: weiAmount.toString(),
       };
       
       // Send transaction
-      const txHash = await window.ethereum.request({
+      txHash = await window.ethereum.request({
         method: 'eth_sendTransaction',
         params: [transactionParameters],
       });
 
       setTransactionHash(txHash);
+      console.log("Transaction successful, hash:", txHash);
       
-      // Update bid status to reflect payment
-      const response = await fetch(`/api/bids/${bidId}/publish`, {
-        method: "POST",
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transactionHash: txHash,
-        })
-      });
+      // Now update the bid status
+      try {
+        // Update bid status to reflect payment
+        const response = await fetch(`/api/bids/${bidId}/publish`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            transactionHash: txHash,
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to update bid status");
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || "Failed to update bid status");
+        }
+
+        console.log("Bid published successfully:", data);
+        setSuccess(true);
+        
+        // Redirect after successful payment
+        setTimeout(() => {
+          router.push('/your-bid');
+        }, 3000);
+      } catch (apiError) {
+        console.error("API error:", apiError);
+        
+        // Payment was successful but API update failed
+        setError("Your payment was successful, but there was an issue updating the bid. Please contact support with this transaction ID: " + txHash);
       }
-
-      setSuccess(true);
-      
-      // Redirect after successful payment
-      setTimeout(() => {
-        router.push('/your-bid');
-      }, 3000);
       
     } catch (error) {
       console.error("Payment error:", error);
-      setError(error.message || "Payment failed");
+      
+      if (txHash) {
+        // Transaction was successful but something else failed
+        setError(`Payment completed (ID: ${txHash.substring(0, 10)}...), but there was an error. Please contact support.`);
+      } else {
+        // Transaction failed
+        setError(error.message || "Payment failed");
+      }
     } finally {
       setProcessing(false);
     }
@@ -254,5 +287,14 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<PaymentLoading />}>
+      <PaymentContent />
+    </Suspense>
   );
 }
