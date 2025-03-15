@@ -40,7 +40,7 @@ function PaymentContent({ defaultType = "bid-creation", defaultAmount = 50 }) {
   const [isLoadingBid, setIsLoadingBid] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<string>("card");
 
-  const platformFee = 5.99; // Example platform fee in USD
+  const platformFee = 100; // Example platform fee in USD
 
   // Fetch bid details
   useEffect(() => {
