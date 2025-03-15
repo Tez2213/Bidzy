@@ -24,7 +24,6 @@ model User {
   sessions       Session[]
   password       String?
   bids           Bid[]
-  bidPayments    BidPayment[]
   payments       Payment[]  // Add this line to create the relation with Payment
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -86,7 +85,6 @@ model Bid {
   responses            Int      @default(0)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
-  payments             BidPayment[]
   carrierId            String?  @db.ObjectId
   paymentId            String?  @db.ObjectId
 
