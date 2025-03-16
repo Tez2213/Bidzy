@@ -30,6 +30,15 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 let currentAuctionId: string | null = null;
 
+// Add this near the top with your other variables
+const SOCKET_URLS = [
+  process.env.NEXT_PUBLIC_SOCKET_URL,
+  'https://socket-production-de8b.up.railway.app',
+  'http://localhost:3001'
+].filter(Boolean) as string[]; // Remove any undefined/empty values
+
+let currentUrlIndex = 0;
+
 // Initialize heartbeat
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
@@ -50,19 +59,18 @@ export const stopHeartbeat = () => {
   }
 };
 
-// Update the initializeSocket function
-
+// Replace the initializeSocket function with this updated version:
 export const initializeSocket = (userId: string, username?: string) => {
   if (socket) return socket;
   
   try {
-    // Get URL from environment variable with fallback
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+    // Get URL with fallback strategy
+    const socketUrl = SOCKET_URLS[currentUrlIndex];
     
-    console.log("Attempting to connect to socket server at:", socketUrl);
+    console.log(`Attempting to connect to socket server at: ${socketUrl} (attempt ${currentUrlIndex + 1}/${SOCKET_URLS.length})`);
     
     if (!socketUrl) {
-      console.warn("⚠️ No SOCKET_URL provided in env variables. Check your .env.local file.");
+      console.warn("⚠️ No SOCKET_URL provided in env variables or fallbacks. Check your .env.local file.");
       console.warn("⚠️ Falling back to mock mode for development");
       enableMockSocket();
       return socket;
@@ -84,26 +92,46 @@ export const initializeSocket = (userId: string, username?: string) => {
     });
     
     socket.on("connect", () => {
-      console.log("✅ Socket connected successfully to", socketUrl);
-      console.log("✅ Socket ID:", socket?.id);
+      console.log(`✅ Socket connected successfully to ${socketUrl}`);
+      console.log(`✅ Socket ID: ${socket?.id}`);
       reconnectAttempts = 0;
+      
+      // Start heartbeat when connected
+      startHeartbeat();
     });
 
     socket.on("connect_error", (error) => {
-      console.warn("❌ Socket.IO connection error:", error.message);
-      console.log("Connection details:", {
-        url: socketUrl,
-        transports: ['polling', 'websocket'],
-        query: { userId, username: username || `User-${userId.slice(0, 5)}` }
-      });
+      console.warn(`❌ Socket.IO connection error to ${socketUrl}:`, error.message);
+      
+      reconnectAttempts++;
       
       if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-        console.warn("🔄 Max reconnect attempts reached. Using fallback mock implementation");
-        enableMockSocket(); 
+        console.warn(`🔄 Max reconnect attempts reached for ${socketUrl}.`);
+        
+        // Try next URL if available
+        if (currentUrlIndex < SOCKET_URLS.length - 1) {
+          currentUrlIndex++;
+          reconnectAttempts = 0;
+          console.log(`🔄 Trying next socket URL: ${SOCKET_URLS[currentUrlIndex]}`);
+          
+          // Clean up current socket
+          if (socket) {
+            socket.disconnect();
+            socket = null;
+          }
+          
+          // Try with next URL
+          setTimeout(() => {
+            initializeSocket(userId, username);
+          }, 1000);
+        } else {
+          console.warn("🔄 All URLs tried. Using fallback mock implementation");
+          enableMockSocket();
+        }
       }
-      reconnectAttempts++;
     });
 
+    // The rest of your event handlers remain unchanged
     socket.on("disconnect", (reason) => {
       console.log("Socket disconnected:", reason);
       stopHeartbeat();
@@ -125,6 +153,9 @@ export const initializeSocket = (userId: string, username?: string) => {
         console.log(`Re-joining auction room: ${currentAuctionId}`);
         socket.emit('join_auction', { auctionId: currentAuctionId });
       }
+      
+      // Restart heartbeat when reconnected
+      startHeartbeat();
     });
 
     return socket;
@@ -133,6 +164,22 @@ export const initializeSocket = (userId: string, username?: string) => {
     enableMockSocket();
     return socket;
   }
+};
+
+// Add a resetConnection function to manually try again
+export const resetSocketConnection = (userId: string, username?: string) => {
+  // Reset URL index to start with first URL again
+  currentUrlIndex = 0;
+  reconnectAttempts = 0;
+  
+  // Clean up existing socket
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+  
+  // Initialize new connection
+  return initializeSocket(userId, username);
 };
 
 // Mock socket implementation for development/testing when server isn't available
