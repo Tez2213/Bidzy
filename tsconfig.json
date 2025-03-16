@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "es2020",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
+    "module": "commonjs",
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -21,8 +21,24 @@
     "paths": {
       "@/*": ["./src/*"],
       "@prisma/client/*": ["./node_modules/@prisma/client/*"]
-    }
+    },
+    "types": ["@nomicfoundation/hardhat-toolbox", "node", "hardhat"],
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "dist"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/types/global.d.ts",
+    "hardhat.config.ts",
+    "scripts",
+    "test",
+    "contracts",
+    "./scripts",
+    "./test"
+  ],
+  "exclude": ["node_modules", "artifacts", "cache"],
+  "files": ["./hardhat.config.ts"]
 }
