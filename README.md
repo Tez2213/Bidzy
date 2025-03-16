@@ -1,15 +1,25 @@
-# Bidzy - Modern Logistics Bidding Platform
+# Bidzy - Real-Time Logistics Bidding Platform
 
-Bidzy is a cutting-edge logistics platform designed to transform the shipping and logistics industry. Our platform connects shippers and carriers in real-time by enabling shippers to post their shipping requests and allowing carriers to bid on these opportunities through an intuitive, dynamic interface.
+Bidzy is a cutting-edge logistics marketplace designed to transform the shipping industry through real-time competitive bidding. Our platform connects shippers with carriers in a dynamic marketplace that ensures both parties maximize their economic potential.
 
-## 🌟 Project Description
+<p align="center">
+  <strong>Where shipping meets real-time deals—fast, fair, and frictionless</strong>
+</p>
+
+## 🌟 Project Description & Inspiration
+
+The logistics market is fundamentally broken—opaque pricing, poor fleet utilization, and missed opportunities are bleeding value from both sides. Inspired by the dynamics of financial markets and the efficiency of real-time trading platforms, Bidzy introduces a high-frequency bidding system that flips the script:
+
+- **For Shippers**: Lock in the best rates through live, competitive auctions
+- **For Carriers**: Increase fleet efficiency and maximize profit margins by securing more jobs at optimal rates
+- **For the Market**: Create transparency that ensures fair pricing and better decision-making for all parties
 
 ## 📌 Problem Statement  
 
 The logistics and shipping industry faces several critical challenges:  
 
 - **High Shipping Costs**: Businesses struggle with unpredictable and inflated shipping rates due to a lack of transparent competition.  
-- **Inefficient Carrier Matching**: Shippers find it difficult to connect with the most cost-effective and reliable carriers.  
+- **Empty Trucks & Wasted Capacity**: Carriers operate with inefficient routes and underutilized fleets.
 - **Manual & Delayed Bidding**: Traditional bidding processes are slow and inefficient, often requiring manual intervention, leading to shipping delays.  
 - **Lack of Trust & Security**: Existing shipping platforms lack a decentralized verification system, resulting in trust issues and potential fraud.  
 - **Limited AI Assistance**: Users rarely receive real-time guidance for cost estimation, bidding strategies, or logistics planning.  
@@ -18,40 +28,40 @@ The logistics and shipping industry faces several critical challenges:
 
 **Bidzy** is a **real-time logistics bidding platform** designed to enhance cost efficiency, transparency, and automation in the shipping industry.  
 
-### 🔥 How Bidzy Solves These Challenges  
+### 🔥 Key Features  
 
 #### **Smart Bidding System**  
-- Shippers can post shipping requests.  
-- Carriers can bid in real-time, ensuring competitive pricing.  
+- Shippers post shipping requests with detailed requirements
+- Carriers bid in real-time, ensuring competitive pricing
+- Live updates show market movements as they happen
 
 #### **AI-Powered Price Estimator**  
-- Uses machine learning to provide **intelligent cost estimations** before bidding starts.  
+- Uses machine learning to provide **intelligent cost estimations** before bidding starts
+- Analyzes historical data to suggest optimal price ranges for both parties
 
 #### **Blockchain-Powered Transactions**  
-- Implements **smart contracts** for **secure, transparent, and tamper-proof transactions**, reducing fraud and increasing trust.  
+- Implements **smart contracts** for **secure, transparent, and tamper-proof transactions**
+- Reduces fraud and increases trust between parties
 
 #### **Automated Carrier Matching**  
-- AI-driven algorithms recommend the best carriers based on cost, reliability, and past performance.  
+- AI-driven algorithms recommend the best carriers based on cost, reliability, and past performance
+- Intelligent route optimization for better fleet utilization
 
 #### **Interactive Dashboard**  
-- Real-time tracking system for bids, shipments, and analytics.  
-- Provides insights into bid history and success rates.  
+- Real-time tracking system for bids, shipments, and analytics
+- Provides insights into bid history and success rates
 
 #### **AI Chatbot Assistance**  
-- Industry-specific AI chatbot for real-time shipping queries, bidding tips, and logistics insights.  
-
-#### **Seamless UI/UX**  
-- Built with **Next.js 14 and Tailwind CSS** for a **modern, responsive, and intuitive user experience** across all devices.  
-
-**Bidzy transforms logistics into a fast, cost-effective, and transparent process, empowering both businesses and carriers to maximize efficiency!**  
+- Industry-specific AI chatbot for real-time shipping queries, bidding tips, and logistics insights
 
 ### The Impact
 
 By streamlining the logistics process, Bidzy aims to:
-- Reduce overall shipping costs.
-- Increase transparency and trust in the logistics chain.
-- Empower both shippers and carriers with real-time data and analytics.
-- Pave the way for a more efficient and reliable logistics ecosystem.
+- Reduce overall shipping costs for businesses
+- Increase fleet utilization and profit margins for carriers
+- Provide transparency and trust in the logistics chain
+- Empower both shippers and carriers with real-time data and analytics
+- Create a more efficient and environmentally sustainable logistics ecosystem
 
 ## 🛠 Tech Stack
 
@@ -63,21 +73,19 @@ By streamlining the logistics process, Bidzy aims to:
 ### Frontend Architecture
 - **State Management**: React Hooks, Context API
 - **UI Components**: Shadcn/ui, Custom components
-- **Styling**: Tailwind CSS 3.x, CSS Modules, CSS Variables
+- **Styling**: Tailwind CSS 3.x
 
-### Design & Interactions
-- **Animations**: Framer Motion
-- **Icons**: Tabler Icons
-- **Theme**: Custom dark theme
-- **Layouts**: Responsive grid system and mobile-first approach
+### Backend & Infrastructure
+- **Real-time communication**: Socket.IO for bidding events and notifications
+- **Authentication**: NextAuth.js for secure user management
+- **Database**: Prisma ORM with PostgreSQL for data persistence
+- **Deployment**: Vercel for the main application and Railway for dedicated socket server
 
-### AI & Machine Learning
-- **AI Chatbot**: Coze-powered chatbot trained on industry-specific data for deep insights and support.
-- **AI Price Calculator**: Intelligent price estimation based on real-time information.
-
-### Blockchain Integration
-- **Smart Contracts**: Secure and transparent transactions built with Solidity.
-- **Decentralized Ledger**: For managing bids and ensuring trust between parties.
+### AI & Blockchain
+- **AI Chatbot**: Coze-powered chatbot trained on industry-specific data
+- **AI Price Calculator**: Intelligent price estimation based on real-time market data
+- **Smart Contracts**: Secure and transparent transactions built with Solidity
+- **Decentralized Ledger**: For managing bids and ensuring trust between parties
 
 ## 🚀 Getting Started
 
@@ -89,7 +97,7 @@ By streamlining the logistics process, Bidzy aims to:
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/yourusername/bidzy.git
+   git clone https://github.com/Tez2213/Bidzy.git
    cd bidzy
    ```
 
@@ -104,6 +112,9 @@ By streamlining the logistics process, Bidzy aims to:
    Create a file named .env.local in the project root and add the following:
    ```env
    NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXTAUTH_SECRET=your-secret-here
+   DATABASE_URL=your-database-url
+   NEXT_PUBLIC_SOCKET_URL="https://socket-production-de8b.up.railway.app/"
    ```
 
 4. **Run the Development Server:**
@@ -114,7 +125,7 @@ By streamlining the logistics process, Bidzy aims to:
    ```
 
 5. **Open the Application:**
-   Navigate to [http://localhost:3000](http://localhost:3000) in your browser. For the optimal user experience, please view the site on a laptop.
+   Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 📁 Project Structure
 
@@ -126,32 +137,44 @@ bidzy/
 │   │   ├── sections/        # Page Sections
 │   │   └── ui/              # Reusable UI Components
 │   ├── lib/                 # Utility functions
+│   ├── server/              # API routes and server-side functions
 │   └── styles/              # Global styles
 ├── public/                  # Static assets
 └── types/                   # TypeScript definitions
 ```
 
-## 🎯 Core Features
+## 🎯 MVP Features
 
-1. **Shipping Request Management**
-   - Post and manage detailed shipping requests.
-   - Set budgets, timelines, and upload necessary documentation.
+1. **AI-Driven Dynamic Pricing**
+   - Intelligent cost estimation before bidding starts
+   - Price suggestions based on historical data
 
-2. **Dynamic Bidding System**
-   - Real-time bid submissions and comparisons.
-   - Streamlined communication between shippers and carriers.
+2. **Real-Time Bidding Wars**
+   - Live bidding interface with instant updates
+   - Countdown timers and bid notifications
 
-3. **User Dashboard**
-   - Track active bids, success rates, and get insightful analytics.
-   - Manage profiles with verification, ratings, and transaction history.
+3. **Smart Escrow System**
+   - Funds are only released upon job completion
+   - Secure payment processing
 
-4. **AI Chatbot & Price Calculator**
-   - AI-driven chatbot for industry-specific advice and support.
-   - Intelligent price calculator for accurate shipping cost estimations.
+4. **Blockchain Contracts**
+   - Immutable and fraud-proof agreements
+   - Transparent transaction history
 
-5. **Blockchain Integration**
-   - Secure smart contracts using Solidity.
-   - Transparent, trustless bid transactions recorded on a decentralized ledger.
+## 🧪 Challenges We Faced
+
+Building Bidzy wasn't without obstacles:
+
+- **CORS configuration**: Setting up proper cross-origin resource sharing between the main app and socket server proved challenging when deploying to production.
+- **Race conditions**: Managing concurrent bids required careful state management to prevent conflicts.
+- **Real-time data sync**: Ensuring all users see the same bid information simultaneously across devices.
+- **Performance optimization**: Reducing unnecessary re-renders during high-frequency bid updates.
+
+## 📈 Scalability
+
+- **Global Expansion**: Scales across regions, tapping into the $8 trillion logistics market.
+- **Revenue Boost**: AI and blockchain reduce costs, increase transactions, and drive profits.
+- **Versatile Model**: The platform adapts to multiple industries beyond shipping, ensuring long-term growth.
 
 ## 📝 Scripts
 
@@ -188,9 +211,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - **Live Site**: https://bidzy.vercel.app/
 - **GitHub Repository**: https://github.com/Tez2213/Bidzy
   
-- **Site Architecture Diagrams**:
+- **Architecture Diagrams**:
   - **Frontend Diagram**: https://tinyurl.com/2s3sssty
   - **Backend Diagram**: https://tinyurl.com/mwx2ekrh
   - **APIs Diagram**: https://tinyurl.com/3u6twph4
 
-Stay tuned for our next advanced version of Bidzy!
+## 👥 Team BurgerOS
+
+- Aaditya Singhal
+- Aditya Singh
+- Anant Singhal
+- Tejasvi Kesarwani
+- Kunal Singh
